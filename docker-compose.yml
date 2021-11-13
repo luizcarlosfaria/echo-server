@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  jornada:
+    image: ${DOCKER_REGISTRY-}jornada
+    build:
+      context: .
+      dockerfile: Jornada/Dockerfile
+    environment: 
+        - applicationUrl=http://localhost
+    networks: 
+      - jornada
+
+  proxy:
+    image: ${DOCKER_REGISTRY-}proxy
+    build:
+      context: ./proxy/
+      dockerfile: Dockerfile
+    networks: 
+      - jornada
+
+networks: 
+  jornada:
+      driver: bridge

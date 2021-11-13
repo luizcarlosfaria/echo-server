@@ -1,0 +1,205 @@
+@using System.IO
+@{
+    Layout = "app/_Layout";
+}
+
+
+
+<div class=" container mx-auto " ng-controller="AdminUIController">
+
+    <main class="flex-1 relative z-0 focus:outline-none" tabindex="0">
+
+        <div class="bg-indigo-600 mt-8 mb-8 border-b border-gray-200 px-4 py-4 sm:rounded-lg">
+            <div class="flex-1 min-w-0">
+                <h1 class="text-2xl font-medium leading-6 text-white">
+                    Echo
+                </h1>
+                <h1 class="text-l font-medium leading-6 text-white">
+                    Server
+                </h1>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <div class="shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+                <h1 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">
+                    HTTP Request Headers
+                </h1>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="border-t border-gray-200">
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Key
+                            </th>
+                            <th class="sm:block px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Value
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        <tr>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                Path
+                            </td>
+                            <td class="sm:block px-6 py-3 text-sm text-gray-500 font-medium">
+                                @this.Context.Request.Path
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                Method
+                            </td>
+                            <td class="sm:block px-6 py-3 text-sm text-gray-500 font-medium">
+                                @this.Context.Request.Method
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                Scheme
+                            </td>
+                            <td class="sm:block px-6 py-3 text-sm text-gray-500 font-medium">
+                                @this.Context.Request.Scheme
+                            </td>
+                        </tr>
+
+                        @foreach (var header in this.Context.Request.Headers.OrderBy(it => it.Key))
+                        {
+                            <tr>
+                                <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    @header.Key
+                                </td>
+                                <td class="sm:block px-6 py-3 text-sm text-gray-500 font-medium">
+                                    @header.Value
+                                </td>
+
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <div class="shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+                <h1 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">
+                    HTTP Request QueryString
+                </h1>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="border-t border-gray-200">
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                                Key
+                            </th>
+                            <th class="sm:block px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                                Value
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        @foreach (var key in this.Context.Request.Query.Keys)
+                        {
+                            <tr>
+                                <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    @key
+                                </td>
+                                <td class="sm:block px-6 py-3 text-sm text-gray-500 font-medium">
+                                    @this.Context.Request.Query[key]
+                                </td>
+                            </tr>
+                        }
+                        @if (this.Context.Request.Query.Count == 0)
+                        {
+                            <tr>
+                                <td class="px-6 py-3 whitespace-nowrap text-center text-sm font-medium text-gray-900" colspan="2">
+                                    Nenhum dado para ser exibido
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @{
+            string[] verbsWithBody = new string[] { "POST", "PUT" };
+        }
+
+        @if (verbsWithBody.Contains(this.Context.Request.Method))
+        {
+
+            <div class="mt-8">
+                 <div class="shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+                <h1 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">
+                        HTTP Request Forms
+                    </h1>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr class="border-t border-gray-200">
+                                <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Key
+                                </th>
+                                <th class="sm:block px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Value
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            @foreach (var key in this.Context.Request.Form.Keys)
+                            {
+                                <tr>
+                                    <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        @key
+                                    </td>
+                                    <td class="sm:block px-6 py-3 text-sm text-gray-500 font-medium">
+                                        @this.Context.Request.Form[key]
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <div class="mt-8 mb-8">
+            <div class="shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+                <h1 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">
+                    Environment Variables
+                </h1>
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-t border-gray-200">
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Key
+                            </th>
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">
+                                Value
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        @foreach (string environmentVariable in Environment.GetEnvironmentVariables().Keys)
+                        {
+                            <tr>
+                                <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    @environmentVariable
+                                </td>
+                                <td class="px-6 py-3 text-sm text-gray-500 font-medium pr-2">
+                                    @Environment.GetEnvironmentVariable(environmentVariable)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section scripts
+{
+
+
+}

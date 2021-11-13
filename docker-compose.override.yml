@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  jornada:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Logging__LogLevel__Default=Debug
+      - Logging__LogLevel__Microsoft=Debug
+      - Logging__LogLevel__Microsoft.Hosting.Lifetime=Debug
+      - Logging__LogLevel__Microsoft.AspNetCore.Hosting.Diagnostics=Debug
+      - Logging__LogLevel__Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectHandler=Debug
+  proxy:
+    ports: 
+      - 80:80

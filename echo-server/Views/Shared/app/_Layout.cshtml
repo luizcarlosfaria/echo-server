@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html>
+<html dir="ltr" lang="pt-br" >
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="author" content="Luiz Carlos Faria" href="https://github.com/luizcarlosfaria/" />
+
+    <link href="https://unpkg.com/tailwindcss@@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+
+    @*<link rel="stylesheet" href="https://rsms.me/inter/inter.css">*@
+
+    <!-- Document Title
+    ============================================= -->
+    <title>Echo Server</title>
+
+</head>
+<body class="bg-gray-300">
+
+    @RenderBody()
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
