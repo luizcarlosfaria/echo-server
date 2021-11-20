@@ -1,6 +1,13 @@
 @using System.IO
 @{
     Layout = "app/_Layout";
+
+    var appName = System.Environment.GetEnvironmentVariable("APP_NAME");
+    appName = string.IsNullOrWhiteSpace(appName) ? "Echo" : appName;
+
+    var headerColor = System.Environment.GetEnvironmentVariable("HEADER_COLOR");
+    headerColor = string.IsNullOrWhiteSpace(headerColor) ? "gray-900" : headerColor;
+
 }
 
 
@@ -8,14 +15,22 @@
 <div class=" container mx-auto " ng-controller="AdminUIController">
 
     <main class="flex-1 relative z-0 focus:outline-none" tabindex="0">
-
-        <div class="bg-indigo-600 mt-8 mb-8 border-b border-gray-200 px-4 py-4 sm:rounded-lg">
+        <!--
+            Customize Header color using Environment Variable "HEADER_COLOR"
+            Default is gray-900
+            Now using @headerColor
+            see more at https://tailwindcss.com/docs/customizing-colors        
+        -->
+        <div class="bg-@(headerColor)  mt-8 mb-8 border-b border-gray-200 px-4 py-4 sm:rounded-lg">
             <div class="flex-1 min-w-0">
                 <h1 class="text-2xl font-medium leading-6 text-white">
-                    Echo
+                    @appName
                 </h1>
                 <h1 class="text-l font-medium leading-6 text-white">
-                    Server
+                    Echo Server
+                </h1>
+                <h1 class="text-l font-medium leading-6 text-white">
+                    @DateTime.Now.ToString("o")
                 </h1>
             </div>
         </div>

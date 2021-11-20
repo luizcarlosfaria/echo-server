@@ -24,10 +24,13 @@
     },
     "Echo": {
       "commandName": "Project",
+      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation",
-        "ASPNETCORE_URLS": "http://*:80"
+        "HEADER_COLOR": "gray-900",
+        "ASPNETCORE_URLS": "http://*:80",
+        "APP_NAME": "App1"
       },
       "applicationUrl": "http://localhost:80"
     }

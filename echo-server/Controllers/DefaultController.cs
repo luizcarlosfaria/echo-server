@@ -44,7 +44,13 @@ namespace Jornada.Controllers
 
         public async Task<IActionResult> IndexJsonAsync()
         {
+            var appName = System.Environment.GetEnvironmentVariable("APP_NAME");
+            appName = string.IsNullOrWhiteSpace(appName) ? "Echo" : appName;
+
             JObject returnValue = new JObject();
+            returnValue.Add("AppName", new JValue(appName));
+            returnValue.Add("Now", new JValue(DateTime.Now.ToString("o")));
+            returnValue.Add("UtcNow", new JValue(DateTime.UtcNow.ToString("o")));
             returnValue.Add("Headers", JObject.FromObject(this.Request.Headers));
             returnValue.Add("Path", new JValue(this.Request.Path));
             returnValue.Add("MachineName", new JValue(Environment.MachineName));
