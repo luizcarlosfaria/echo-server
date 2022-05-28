@@ -157,3 +157,14 @@ curl -v  http://localhost/echo2?a=1 -H 'Content-Type: application/json' -H 'Acce
 * Connection #0 to host localhost left intact
 
 ```
+
+## Tempo de Resposta base
+
+| Tipo | Estratégia  | Tempo |
+| ------------- | ------------- |------------- |
+| HTML | Docker (local)  | 3ms |
+| HTML | Windows + Visual Studio  | 12ms |
+| HTML | Windows | 4ms |
+| json | Docker (local)  | 2ms |
+| json | Windows + Visual Studio  | 4ms |
+| json | Windows  | 3ms |
