@@ -160,11 +160,9 @@ curl -v  http://localhost/echo2?a=1 -H 'Content-Type: application/json' -H 'Acce
 
 ## Tempo de Resposta base
 
-| Tipo | Estratégia  | Tempo |
-| ------------- | ------------- |------------- |
-| HTML | Docker (local)  | 3ms |
-| HTML | Windows + Visual Studio  | 12ms |
-| HTML | Windows | 4ms |
-| json | Docker (local)  | 2ms |
-| json | Windows + Visual Studio  | 4ms |
-| json | Windows  | 3ms |
+| Deploy 						| Acesso / Formato 		| Tempo 		| Acesso / Formato		| Tempo |
+|-------------------------------|-----------------------|---------------|-----------------------|-------|
+| docker run 					| Browser / HTML 		| 3ms 			| curl / JSON			| 2ms   |
+| Visual Studio Run 			| Browser / HTML 		| 12ms 			| curl / JSON  			| 4ms   |
+| Visual Studio Detached Run 	| Browser / HTML 		| 4ms 			| curl / JSON  			| 3ms   |
+
