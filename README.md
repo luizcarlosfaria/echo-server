@@ -29,3 +29,10 @@ docker run -d -p:82:80 \
 luizcarlosfaria/echo-server:latest
 ```
 Abra o navegador em http://localhost:82
+
+
+
+
+## Paleta de Cores
+
+[![Isso é uma imagem](https://raw.githubusercontent.com/luizcarlosfaria/echo-server/master/docs/assets/Customizing-Colors-Tailwind-CSS.png)](https://tailwindcss.com/docs/customizing-colors)
