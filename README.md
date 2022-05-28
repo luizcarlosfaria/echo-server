@@ -12,3 +12,20 @@ Antes de subir sua aplicação, valide.
 | APP_NAME=Echo 1  |  APP_NAME=Echo 2 |
 
 
+## Formas de Uso
+
+```sh
+docker run -d -p:81:80 \
+-e HEADER_COLOR=blue-600 \
+-e APP_NAME="Echo 1" \
+luizcarlosfaria/echo-server:latest
+```
+Abra o navegador em http://localhost:81
+
+```sh
+docker run -d -p:82:80 \
+-e HEADER_COLOR=red-600 \
+-e APP_NAME="Echo 2" \
+luizcarlosfaria/echo-server:latest
+```
+Abra o navegador em http://localhost:82
