@@ -47,7 +47,7 @@ namespace Jornada
             });
 
 
-            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            services.AddControllersWithViews();
         }
 
 
