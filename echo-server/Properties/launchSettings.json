@@ -1,38 +1,22 @@
 {
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:5689",
-      "sslPort": 0
-    }
-  },
   "profiles": {
-    "IIS Express": {
-      "commandName": "IISExpress",
+    "Echo": {
+      "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "_echo",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"
-      }
+        "HEADER_COLOR": "gray-900",
+        "APP_NAME": "App1",
+        "ECHO_MAX_REQUESTS": "1000"
+      },
+      "applicationUrl": "http://localhost:5080"
     },
     "Docker": {
       "commandName": "Docker",
       "launchBrowser": true,
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/_echo",
       "publishAllPorts": true
-    },
-    "Echo": {
-      "commandName": "Project",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation",
-        "HEADER_COLOR": "gray-900",
-        "ASPNETCORE_URLS": "http://*:80",
-        "APP_NAME": "App1"
-      },
-      "applicationUrl": "http://localhost:80"
     }
   }
 }
