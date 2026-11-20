@@ -1,0 +1,51 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = $"{Model.Options.AppName} · Requests ao vivo";
+}
+
+<div id="echo-dashboard" class="container mx-auto px-2 pb-8"
+     data-base="@Url.Content("~/_echo/")" data-capacity="@Model.Capacity">
+
+    <div class="bg-@(Model.Options.HeaderColor) mt-8 mb-6 px-4 py-4 sm:rounded-lg flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-medium leading-6 text-white">@Model.Options.AppName</h1>
+            <p class="text-white">Echo Server · requests em tempo real</p>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-white">
+            <span id="status-dot" class="inline-block h-3 w-3 rounded-full bg-yellow-400"></span>
+            <span id="status-text">conectando…</span>
+        </div>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+        <input id="filter" type="search" placeholder="Filtrar por método, path, IP, content-type…"
+               class="flex-1 min-w-[16rem] rounded-md border-gray-300 text-sm" />
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input id="only-problems" type="checkbox" class="rounded border-gray-300" />
+            Só com problemas (<span id="problem-count">0</span>)
+        </label>
+        <button id="pause" type="button" class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50">Pausar</button>
+        <button id="clear" type="button" class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">Limpar histórico</button>
+        <span class="text-sm text-gray-700">
+            <span id="count">0</span> / @Model.Capacity armazenados · <span id="total">0</span> recebidos
+        </span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <section class="lg:col-span-2 shadow bg-white sm:rounded-lg overflow-hidden">
+            <ul id="list" class="divide-y divide-gray-100 max-h-[75vh] overflow-y-auto"></ul>
+            <p id="empty" class="px-6 py-10 text-center text-sm text-gray-500">
+                Nenhum request ainda. Envie algo para qualquer path deste servidor, ex.:<br />
+                <code class="text-gray-700">curl -X POST @Context.Request.Scheme://@Context.Request.Host/teste -d '{"ola":"mundo"}' -H 'Content-Type: application/json'</code>
+            </p>
+        </section>
+
+        <section id="detail" class="lg:col-span-3 shadow bg-white sm:rounded-lg overflow-hidden">
+            <p class="px-6 py-10 text-center text-sm text-gray-500">Selecione um request para ver os detalhes.</p>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/_echo/dashboard.js")" asp-append-version="true"></script>
+}

@@ -1,24 +1,27 @@
-version: '3.4'
-
 services:
-  jornada:
-    image: ${DOCKER_REGISTRY-}jornada
+  echo:
+    image: ${DOCKER_REGISTRY-}echo-server
     build:
       context: .
-      dockerfile: Jornada/Dockerfile
-    environment: 
-        - applicationUrl=http://localhost
-    networks: 
-      - jornada
+      dockerfile: echo-server/Dockerfile
+    environment:
+      - APP_NAME=Echo
+      - ECHO_MAX_REQUESTS=1000
+      - ECHO_MAX_BODY_BYTES=65536
+      - ECHO_MAX_REQUEST_BYTES=30000000
+    networks:
+      - echo
 
   proxy:
     image: ${DOCKER_REGISTRY-}proxy
     build:
       context: ./proxy/
       dockerfile: Dockerfile
-    networks: 
-      - jornada
+    depends_on:
+      - echo
+    networks:
+      - echo
 
-networks: 
-  jornada:
-      driver: bridge
+networks:
+  echo:
+    driver: bridge

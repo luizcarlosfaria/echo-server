@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
-  jornada:
-    image: jornada_gago_io:${BRANCH_NAME:master}
+  echo:
+    image: echo-server:${BRANCH_NAME:-master}

@@ -17,7 +17,7 @@ pipeline {
 
                 sh  '''
 
-                    docker build . -f ./Jornada/Dockerfile -t registry.oragon.io/jornada_gago_io/jornada-webapp:${BRANCH_NAME:-master}
+                    docker build . -f ./echo-server/Dockerfile -t registry.oragon.io/jornada_gago_io/jornada-webapp:${BRANCH_NAME:-master}
                
                 '''
 
