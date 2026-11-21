@@ -155,7 +155,7 @@ public class RequestHistoryTests
         var echo = await app.CreateClient().EchoAsync(HttpMethod.Post, "/json-grande", JsonContent.Create(new { campo = new string('y', 100) }));
 
         Assert.False(echo.TryGetProperty("Payload", out _));
-        Assert.Contains("truncado", echo.Body().Str("JsonError"));
+        Assert.Contains("truncated", echo.Body().Str("JsonError"));
     }
 
     [Theory]

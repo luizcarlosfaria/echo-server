@@ -66,7 +66,7 @@ public sealed class EchoOptions
         if (FalseValues.Contains(value, StringComparer.OrdinalIgnoreCase))
             return false;
 
-        throw new InvalidOperationException($"A variável de ambiente {key} deve ser true ou false, mas recebeu '{raw}'.");
+        throw new InvalidOperationException($"The environment variable {key} must be true or false, but got '{raw}'.");
     }
 
     // Valor inválido derruba a subida com mensagem clara (fail fast) em vez de assumir o default silenciosamente.
@@ -79,6 +79,6 @@ public sealed class EchoOptions
         if (int.TryParse(raw.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) && value > 0)
             return value;
 
-        throw new InvalidOperationException($"A variável de ambiente {key} deve ser um inteiro positivo, mas recebeu '{raw}'.");
+        throw new InvalidOperationException($"The environment variable {key} must be a positive integer, but got '{raw}'.");
     }
 }

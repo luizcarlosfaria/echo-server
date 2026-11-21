@@ -52,7 +52,7 @@ public class RequestProblemTests(EchoAppFactory factory) : IClassFixture<EchoApp
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var problem = Problem(echo, "json_invalid");
         Assert.Equal("error", problem.Str("Severity"));
-        Assert.Contains("JSON inválido", problem.Str("Message"));
+        Assert.Contains("Invalid JSON", problem.Str("Message"));
         Assert.Equal("json_invalid", response.Headers.GetValues("X-Echo-Problems").Single());
     }
 
@@ -189,7 +189,7 @@ public class RequestProblemTests(EchoAppFactory factory) : IClassFixture<EchoApp
         var html = await response.Content.ReadAsStringAsync(Ct);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Problemas detectados", html);
+        Assert.Contains("Problems detected", html);
         Assert.Contains("json_invalid", html);
     }
 

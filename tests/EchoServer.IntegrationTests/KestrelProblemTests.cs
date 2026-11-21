@@ -77,7 +77,7 @@ public class KestrelProblemTests
 
         var detail = await http.GetFromJsonAsync<JsonElement>($"/_echo/api/requests/{summary.GetProperty("id").GetInt64()}", Ct);
         Assert.Equal("apenas 20 bytes aqui", detail.GetProperty("body").Str("text"));
-        Assert.Contains("após 20 bytes", detail.GetProperty("problems")[0].Str("message"));
+        Assert.Contains("after 20 bytes",detail.GetProperty("problems")[0].Str("message"));
     }
 
     [Fact]

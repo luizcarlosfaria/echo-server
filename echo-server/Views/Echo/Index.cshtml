@@ -16,8 +16,8 @@
 <div class="container mx-auto px-2">
     <main class="flex-1 relative z-0">
         <!--
-            Cor do cabeçalho via variável de ambiente HEADER_COLOR (default gray-900).
-            Paleta: https://tailwindcss.com/docs/customizing-colors
+            Header color set by the HEADER_COLOR environment variable (default gray-900).
+            Palette: https://tailwindcss.com/docs/customizing-colors
         -->
         <div class="bg-@(Model.Options.HeaderColor) mt-8 mb-8 px-4 py-4 sm:rounded-lg flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -26,7 +26,7 @@
                 <p class="text-white">@DateTime.Now.ToString("o")</p>
             </div>
             <a href="@Url.Content("~/_echo")" class="rounded-md bg-white/20 hover:bg-white/30 px-4 py-2 text-sm font-medium text-white">
-                Ver requests em tempo real →
+                View live requests →
             </a>
         </div>
 
@@ -34,7 +34,7 @@
         {
             <div class="mt-8 shadow overflow-hidden border border-amber-300 bg-amber-50 sm:rounded-lg">
                 <h2 class="px-6 py-3 text-lg font-medium leading-6 text-amber-900">
-                    Problemas detectados no request (@request.Problems.Count)
+                    Problems detected in this request (@request.Problems.Count)
                 </h2>
                 <ul class="divide-y divide-amber-200 bg-white">
                     @foreach (var problem in request.Problems)
@@ -95,7 +95,7 @@
                     }
                     @if (request.Query.Count == 0)
                     {
-                        <tr><td class="px-6 py-3 text-center text-sm font-medium text-gray-900" colspan="2">Nenhum dado para ser exibido</td></tr>
+                        <tr><td class="px-6 py-3 text-center text-sm font-medium text-gray-900" colspan="2">No data to display</td></tr>
                     }
                 </tbody>
             </table>
@@ -106,12 +106,12 @@
             <div class="mt-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
                 <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">
                     HTTP Request Body
-                    <span class="ml-2 text-sm text-gray-500">@body.Kind · @body.Size bytes@(body.Truncated ? " · truncado" : "")</span>
+                    <span class="ml-2 text-sm text-gray-500">@body.Kind · @body.Size bytes@(body.Truncated ? " · truncated" : "")</span>
                 </h2>
                 @if (body.Form is { Count: > 0 })
                 {
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead><tr><th class="@Th">Campo</th><th class="@Th">Valor</th></tr></thead>
+                        <thead><tr><th class="@Th">Field</th><th class="@Th">Value</th></tr></thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @foreach (var field in body.Form)
                             {
@@ -123,7 +123,7 @@
                 @if (body.Files is { Count: > 0 })
                 {
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead><tr><th class="@Th">Arquivo</th><th class="@Th">Detalhes</th></tr></thead>
+                        <thead><tr><th class="@Th">File</th><th class="@Th">Details</th></tr></thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @foreach (var file in body.Files)
                             {
