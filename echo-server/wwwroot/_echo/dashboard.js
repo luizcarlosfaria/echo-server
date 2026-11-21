@@ -87,6 +87,8 @@
         const [badgeStyle, border] = SEVERITY_STYLES[item.problemSeverity] ?? ['', 'border-l-4 !border-l-transparent'];
         const li = h('li', `px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-start gap-3 ${border}`);
         li.dataset.id = item.id;
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', String(item.id === selectedId));
         if (item.id === selectedId) li.classList.add('bg-indigo-50');
 
         const badge = h('span', `shrink-0 w-16 text-center rounded px-2 py-0.5 text-xs font-semibold ${METHOD_COLORS[item.method] ?? 'bg-gray-100 text-gray-800'}`, item.method);
@@ -201,21 +203,82 @@
             section('Body', bodyBox));
     }
 
-    async function select(id) {
+    // Só troca o destaque das linhas: re-renderizar a lista inteira (até 1000 itens) a cada tecla seria caro.
+    function highlight() {
+        for (const li of el.list.children) {
+            const selected = Number(li.dataset.id) === selectedId;
+            li.classList.toggle('bg-indigo-50', selected);
+            li.setAttribute('aria-selected', String(selected));
+        }
+    }
+
+    let detailTimer = null;
+
+    // fromKeyboard: rola a linha para a área visível e adia a busca do detalhe (debounce),
+    // para que segurar PageDown não dispare uma requisição por linha percorrida.
+    function select(id, { fromKeyboard = false } = {}) {
         selectedId = id;
-        renderList();
+        highlight();
+        if (fromKeyboard) el.list.querySelector(`li[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest' });
+
         el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'Carregando…'));
+        clearTimeout(detailTimer);
+        detailTimer = setTimeout(() => loadDetail(id), fromKeyboard ? 150 : 0);
+    }
+
+    async function loadDetail(id) {
         try {
             const response = await fetch(`${base}api/requests/${id}`, { headers: { Accept: 'application/json' } });
+            if (selectedId !== id) return; // o usuário já selecionou outro enquanto carregava
             if (response.status === 404) {
                 el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'Este request já foi expurgado do histórico.'));
                 return;
             }
-            if (selectedId === id) renderDetail(await response.json());
+            renderDetail(await response.json());
         } catch (err) {
-            el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-red-600', `Falha ao carregar: ${err}`));
+            if (selectedId === id)
+                el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-red-600', `Falha ao carregar: ${err}`));
         }
     }
+
+    // ---------- navegação por teclado ----------
+    // Home/End: primeiro (mais recente) / último. PageUp/PageDown: uma "página" da lista. Setas: uma linha.
+    const NAV_KEYS = new Set(['Home', 'End', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown']);
+
+    function rowsPerPage() {
+        const row = el.list.firstElementChild;
+        if (!row || row.offsetHeight === 0) return 10;
+        return Math.max(1, Math.floor(el.list.clientHeight / row.offsetHeight) - 1);
+    }
+
+    function isTyping(target) {
+        return target instanceof Element
+            && target.matches('input:not([type=checkbox]):not([type=button]):not([type=submit]), textarea, select, [contenteditable=""], [contenteditable="true"]');
+    }
+
+    document.addEventListener('keydown', event => {
+        if (!NAV_KEYS.has(event.key) || event.altKey || event.ctrlKey || event.metaKey || isTyping(event.target)) return;
+
+        const ids = [...el.list.children].map(li => Number(li.dataset.id));
+        if (ids.length === 0) return;
+        event.preventDefault(); // não rola a página: as teclas passam a navegar na lista
+
+        const current = ids.indexOf(selectedId);
+        const page = rowsPerPage();
+        const moves = {
+            Home: () => 0,
+            End: () => ids.length - 1,
+            PageUp: () => current - page,
+            PageDown: () => current + page,
+            ArrowUp: () => current - 1,
+            ArrowDown: () => current + 1,
+        };
+        // Sem seleção (ou selecionado escondido pelo filtro): qualquer tecla relativa começa do topo.
+        const target = current < 0 && event.key !== 'End' ? 0 : moves[event.key]();
+        const next = Math.min(Math.max(target, 0), ids.length - 1);
+
+        if (ids[next] !== selectedId) select(ids[next], { fromKeyboard: true });
+    });
 
     // ---------- WebSocket ----------
     function handleMessage(message) {

@@ -8,7 +8,8 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "HEADER_COLOR": "gray-900",
         "APP_NAME": "App1",
-        "ECHO_MAX_REQUESTS": "1000"
+        "ECHO_MAX_REQUESTS": "1000",
+        "ECHO_SHOW_ENVIRONMENT": "true"
       },
       "applicationUrl": "http://localhost:5080"
     },

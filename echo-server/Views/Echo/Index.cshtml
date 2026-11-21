@@ -143,17 +143,21 @@
             </div>
         }
 
-        <div class="mt-8 mb-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
-            <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">Environment Variables</h2>
-            <table class="min-w-full">
-                <thead><tr><th class="@Th">Key</th><th class="@Th">Value</th></tr></thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    @foreach (var variable in Model.EnvironmentVariables)
-                    {
-                        <tr><td class="@TdKey">@variable.Key</td><td class="@TdValue">@variable.Value</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        @if (Model.EnvironmentVariables is { } environmentVariables)
+        {
+            <div class="mt-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+                <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">Environment Variables</h2>
+                <table class="min-w-full">
+                    <thead><tr><th class="@Th">Key</th><th class="@Th">Value</th></tr></thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        @foreach (var variable in environmentVariables)
+                        {
+                            <tr><td class="@TdKey">@variable.Key</td><td class="@TdValue">@variable.Value</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        <div class="mb-8"></div>
     </main>
 </div>

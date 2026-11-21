@@ -60,7 +60,8 @@ public static class EchoResponse
 
         // O JSON já aparece em Payload; não duplica dentro de Body.
         result["Body"] = JsonSerializer.SerializeToNode(body with { Json = null }, EchoJson.Echo);
-        result["EnvironmentVariables"] = JsonSerializer.SerializeToNode(EnvironmentSnapshot.Get(), EchoJson.Echo);
+        if (options.ShowEnvironment)
+            result["EnvironmentVariables"] = JsonSerializer.SerializeToNode(EnvironmentSnapshot.Get(), EchoJson.Echo);
 
         return result;
     }

@@ -10,7 +10,9 @@ ENV TZ=America/Sao_Paulo \
     # Bytes de body armazenados por request (o excedente é truncado; o echo informa o tamanho real).
     ECHO_MAX_BODY_BYTES=65536 \
     # Bytes lidos por body; acima disso o echo responde 200 e sinaliza body_too_large (em vez de 413).
-    ECHO_MAX_REQUEST_BYTES=30000000
+    ECHO_MAX_REQUEST_BYTES=30000000 \
+    # Exibe as variáveis de ambiente no echo; use false se elas puderem conter segredos.
+    ECHO_SHOW_ENVIRONMENT=true
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 EXPOSE 80
 
