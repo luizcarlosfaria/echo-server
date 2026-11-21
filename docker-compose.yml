@@ -3,7 +3,7 @@ services:
     image: ${DOCKER_REGISTRY-}echo-server
     build:
       context: .
-      dockerfile: echo-server/Dockerfile
+      dockerfile: Dockerfile
     environment:
       - APP_NAME=Echo
       - ECHO_MAX_REQUESTS=1000

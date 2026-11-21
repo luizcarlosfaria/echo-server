@@ -17,7 +17,7 @@ pipeline {
 
                 sh  '''
 
-                    docker build . -f ./echo-server/Dockerfile -t registry.oragon.io/tools/echo:${BRANCH_NAME:-master}
+                    docker build . -f ./Dockerfile -t registry.oragon.io/tools/echo:${BRANCH_NAME:-master}
                
                 '''
 
