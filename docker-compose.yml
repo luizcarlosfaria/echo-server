@@ -3,13 +3,14 @@ services:
     image: ${DOCKER_REGISTRY-}echo-server
     build:
       context: .
-      dockerfile: echo-server/Dockerfile
+      dockerfile: Dockerfile
     environment:
       - APP_NAME=Echo
       - ECHO_MAX_REQUESTS=1000
       - ECHO_MAX_BODY_BYTES=65536
       - ECHO_MAX_REQUEST_BYTES=30000000
       - ECHO_SHOW_ENVIRONMENT=true
+      - ECHO_DASHBOARD_PATH=/_echo
     networks:
       - echo
 

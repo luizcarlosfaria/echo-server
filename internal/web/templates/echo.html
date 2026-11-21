@@ -1,0 +1,134 @@
+{{define "content"}}
+{{- $th := "px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" -}}
+{{- $key := "px-6 py-3 whitespace-nowrap align-top text-sm font-medium text-gray-900" -}}
+{{- $value := "px-6 py-3 text-sm text-gray-500 font-medium break-all" -}}
+{{- $req := .Request -}}
+{{- $body := .Request.Body -}}
+<div class="container mx-auto px-2">
+    <main class="flex-1 relative z-0">
+        <!--
+            Header color set by the HEADER_COLOR environment variable (default gray-900).
+            Palette: https://tailwindcss.com/docs/customizing-colors
+        -->
+        <div class="bg-{{.HeaderColor}} mt-8 mb-8 px-4 py-4 sm:rounded-lg flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-medium leading-6 text-white">{{.AppName}}</h1>
+                <p class="text-white">Echo Server · request #{{$req.ID}}</p>
+                <p class="text-white">{{.Now}}</p>
+            </div>
+            <a href="{{.DashboardURL}}" class="rounded-md bg-white/20 hover:bg-white/30 px-4 py-2 text-sm font-medium text-white">
+                View live requests →
+            </a>
+        </div>
+
+        {{if $req.Problems}}
+        <div class="mt-8 shadow overflow-hidden border border-amber-300 bg-amber-50 sm:rounded-lg">
+            <h2 class="px-6 py-3 text-lg font-medium leading-6 text-amber-900">
+                Problems detected in this request ({{len $req.Problems}})
+            </h2>
+            <ul class="divide-y divide-amber-200 bg-white">
+                {{range $req.Problems}}
+                <li class="px-6 py-3 text-sm flex flex-wrap items-start gap-3">
+                    <span class="rounded px-2 py-0.5 text-xs font-semibold {{badge .Severity}}">{{.Severity}}</span>
+                    <code class="font-semibold text-gray-900">{{.Code}}</code>
+                    <span class="text-gray-600 flex-1 min-w-[12rem]">{{.Message}}</span>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        {{end}}
+
+        <div class="mt-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+            <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">HTTP Request</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead><tr><th class="{{$th}}">Key</th><th class="{{$th}}">Value</th></tr></thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    <tr><td class="{{$key}}">Method</td><td class="{{$value}}">{{$req.Method}}</td></tr>
+                    <tr><td class="{{$key}}">Scheme</td><td class="{{$value}}">{{$req.Scheme}}</td></tr>
+                    <tr><td class="{{$key}}">Host</td><td class="{{$value}}">{{$req.Host}}</td></tr>
+                    <tr><td class="{{$key}}">Path</td><td class="{{$value}}">{{$req.PathBase}}{{$req.Path}}</td></tr>
+                    <tr><td class="{{$key}}">Protocol</td><td class="{{$value}}">{{$req.Protocol}}</td></tr>
+                    <tr><td class="{{$key}}">RemoteIp</td><td class="{{$value}}">{{with $req.RemoteIP}}{{.}}{{end}}</td></tr>
+                    <tr><td class="{{$key}}">MachineName</td><td class="{{$value}}">{{.MachineName}}</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+            <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">HTTP Request Headers</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead><tr><th class="{{$th}}">Key</th><th class="{{$th}}">Value</th></tr></thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {{range .Headers}}
+                    <tr><td class="{{$key}}">{{.Key}}</td><td class="{{$value}}">{{.Value}}</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+            <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">HTTP Request QueryString</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead><tr><th class="{{$th}}">Key</th><th class="{{$th}}">Value</th></tr></thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {{range .Query}}
+                    <tr><td class="{{$key}}">{{.Key}}</td><td class="{{$value}}">{{.Value}}</td></tr>
+                    {{else}}
+                    <tr><td class="px-6 py-3 text-center text-sm font-medium text-gray-900" colspan="2">No data to display</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        {{if ne $body.Kind "none"}}
+        <div class="mt-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+            <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">
+                HTTP Request Body
+                <span class="ml-2 text-sm text-gray-500">{{$body.Kind}} · {{$body.Size}} bytes{{if $body.Truncated}} · truncated{{end}}</span>
+            </h2>
+            {{if .Form}}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead><tr><th class="{{$th}}">Field</th><th class="{{$th}}">Value</th></tr></thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {{range .Form}}
+                    <tr><td class="{{$key}}">{{.Key}}</td><td class="{{$value}}">{{.Value}}</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+            {{end}}
+            {{if $body.Files}}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead><tr><th class="{{$th}}">File</th><th class="{{$th}}">Details</th></tr></thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {{range $body.Files}}
+                    <tr><td class="{{$key}}">{{.Name}}</td><td class="{{$value}}">{{.FileName}} · {{with .ContentType}}{{.}}{{end}} · {{.Length}} bytes</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+            {{end}}
+            {{with $body.Text}}
+            <pre class="bg-white px-6 py-4 text-sm text-gray-800 overflow-x-auto whitespace-pre-wrap break-all">{{.}}</pre>
+            {{end}}
+            {{with $body.Base64}}
+            <pre class="bg-white px-6 py-4 text-xs text-gray-600 overflow-x-auto whitespace-pre-wrap break-all">base64: {{.}}</pre>
+            {{end}}
+        </div>
+        {{end}}
+
+        {{if .ShowEnvironment}}
+        <div class="mt-8 shadow overflow-hidden border-b border-gray-300 bg-gray-100 sm:rounded-lg">
+            <h2 class="px-6 py-3 text-lg font-medium leading-6 text-gray-900">Environment Variables</h2>
+            <table class="min-w-full">
+                <thead><tr><th class="{{$th}}">Key</th><th class="{{$th}}">Value</th></tr></thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {{range .Environment}}
+                    <tr><td class="{{$key}}">{{.Key}}</td><td class="{{$value}}">{{.Value}}</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{end}}
+        <div class="mb-8"></div>
+    </main>
+</div>
+{{end}}

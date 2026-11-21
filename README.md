@@ -36,7 +36,7 @@ Before putting your application behind a proxy, validate the route with the echo
 - **In-memory history** of the last N requests (default 1000); the oldest ones are discarded.
 - **Live dashboard** (`/_echo`) over WebSocket, with filter, pause and keyboard navigation.
 - **Proxy ready**: `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host` and `X-Forwarded-Prefix` are applied, and the original values stay visible.
-- **.NET 11**, Linux image listening on **port 80**.
+- **Written in Go**: a single static binary in a ~22 MB distroless image, listening on **port 80**.
 
 ## Quick start
 
@@ -70,7 +70,9 @@ All of them are optional.
 | `ECHO_SHOW_ENVIRONMENT` | `true` | Includes the container's environment variables in the echo (JSON and HTML). Use `false` when they may contain secrets. |
 | `ECHO_MAX_REQUESTS` | `1000` | Number of requests kept in the in-memory history. When the limit is reached, the oldest ones are discarded. |
 | `ECHO_MAX_BODY_BYTES` | `65536` | Body bytes **stored** per request. The rest is truncated (`Truncated: true`), but `Size` still reports the real size. |
-| `ECHO_MAX_REQUEST_BYTES` | `30000000` | Body bytes **read** per request. Beyond that the echo stops reading, but **still answers 200** and reports `body_too_large` (instead of Kestrel's 413). |
+| `ECHO_MAX_REQUEST_BYTES` | `30000000` | Body bytes **read** per request. Beyond that the echo stops reading, but **still answers 200** and reports `body_too_large` (instead of a 413). |
+| `ECHO_PORT` | `80` | HTTP port the server listens on. |
+| `ECHO_DASHBOARD_PATH` | `/_echo` | Path of the dashboard, its API and its WebSocket. Change it when `/_echo` collides with a route you want to echo (e.g. `/ops/echo`). Letters, digits, `-`, `.`, `_`, `~` and `/` only; the leading `/` is optional and a trailing `/` is ignored. |
 
 **Booleans** accept `true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off`, case-insensitive.
 
@@ -234,7 +236,7 @@ Navigation honors the active filter and keeps the selected item in view. While t
 
 ## History API and WebSocket
 
-Routes under `/_echo` are **reserved**: they are not echoed and do not enter the history.
+Routes under `/_echo` are **reserved**: they are not echoed and do not enter the history. The prefix comes from `ECHO_DASHBOARD_PATH`; with `ECHO_DASHBOARD_PATH=/ops/echo`, every route below moves to `/ops/echo/...` and `/_echo` is echoed like any other path. Matching is case-insensitive and by segment (`/_echox` is not reserved).
 
 | Route | Description |
 |-------|-------------|
@@ -316,35 +318,47 @@ The response shows the `Host`, `Scheme` and `RemoteIp` the pod actually received
 
 ## Development
 
-Requires the **.NET 11 SDK** (pinned in [`global.json`](global.json)).
+Requires **Go 1.27+** (see [`go.mod`](go.mod)). The only dependencies are `github.com/coder/websocket` and `golang.org/x/text`.
 
 ```sh
-dotnet run --project echo-server                          # http://localhost:5080/_echo
-dotnet test --project tests/EchoServer.IntegrationTests   # integration tests
-docker build -f echo-server/Dockerfile -t echo-server .   # image
+ECHO_PORT=8080 go run ./cmd/echo-server   # http://localhost:8080/_echo
+go test -race ./...                       # unit and integration tests
+docker build -t echo-server .             # image
 ```
 
-> If `docker build` fails at `dotnet restore` with exit code **155**, the cached `mcr.microsoft.com/dotnet/sdk:11.0` image is old (pre-GA). Refresh it with `docker pull mcr.microsoft.com/dotnet/sdk:11.0` and `docker pull mcr.microsoft.com/dotnet/aspnet:11.0`.
+Without Go installed, run the same commands in a container:
+
+```sh
+docker run --rm -v "$PWD:/src" -w /src golang:1.27 go test -race ./...
+```
 
 ### Layout
 
 ```text
-echo-server/
-├── Program.cs                     pipeline, configuration and routes
-├── Capture/                       request reading: formats, problems, echo response
-├── Storage/                       EchoOptions (environment variables) and RequestStore (history)
-├── Realtime/                      /_echo/ws WebSocket
-├── Endpoints/                     /_echo/api/* API
-├── Controllers/                   echo (catch-all) and dashboard
-├── Views/                         HTML pages (Razor + Tailwind)
-└── wwwroot/_echo/dashboard.js     dashboard front-end
-tests/EchoServer.IntegrationTests/ integration tests (xunit.v3)
-proxy/                             example nginx
+cmd/echo-server/           entry point: HTTP server, timeouts, graceful shutdown
+internal/
+├── config/                environment variables (fail fast on invalid values)
+├── forwarded/             X-Forwarded-* → Scheme/Host/RemoteIp/PathBase, X-Original-*
+├── capture/               request reading: limits, body formats, charsets, problems
+├── model/                 captured request, body, problems and summaries
+├── store/                 in-memory history (ring buffer) and subscriptions
+├── echo/                  catch-all echo: JSON (PascalCase) and HTML
+├── dashboard/             dashboard page, API and WebSocket under ECHO_DASHBOARD_PATH (/_echo)
+├── web/                   HTML templates (html/template + Tailwind) and dashboard.js, embedded
+└── app/                   wiring, plus the integration tests
+scripts/parity/            compares two running instances request by request
+proxy/                     example nginx
 ```
 
 ### Tests
 
-The integration tests start the real application with `WebApplicationFactory` and cover methods, paths, body formats, HTML vs JSON, `X-Forwarded-*`, history and eviction, environment variables, concurrency, WebSocket and requests with problems. Scenarios that only exist on a real connection (a lying `Content-Length`, a dropped connection, a body over the limit) run against **real Kestrel**, sending raw bytes over a TCP socket.
+The integration tests in `internal/app` start the real application with `httptest` and cover methods, paths, body formats, HTML vs JSON, `X-Forwarded-*`, history and eviction, environment variables, concurrency, WebSocket and requests with problems. Scenarios that only exist on a real connection (a body shorter than its `Content-Length`, a dropped connection, a body over the limit) send raw bytes over a TCP socket.
+
+`scripts/parity` sends the same requests to two running instances (for example, an older image and a new build) and reports every difference in status, `X-Echo-*` headers, echo JSON and history API, ignoring the fields that change by nature (time, hostname, IPs, environment):
+
+```sh
+go run ./scripts/parity -a http://old-echo -b http://new-echo
+```
 
 ## Known limitations
 

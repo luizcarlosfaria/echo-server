@@ -1,11 +1,4 @@
 services:
-  echo:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - Logging__LogLevel__Default=Debug
-      - Logging__LogLevel__Microsoft=Debug
-      - Logging__LogLevel__Microsoft.Hosting.Lifetime=Debug
-      - Logging__LogLevel__Microsoft.AspNetCore.Hosting.Diagnostics=Debug
   proxy:
     ports:
       - 80:80

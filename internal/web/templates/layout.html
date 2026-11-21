@@ -1,0 +1,15 @@
+{{define "layout"}}<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Luiz Carlos Faria" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <title>{{.Title}}</title>
+</head>
+<body class="bg-gray-300">
+    {{template "content" .}}
+    {{block "scripts" .}}{{end}}
+</body>
+</html>
+{{end}}
