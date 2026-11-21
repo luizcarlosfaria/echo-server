@@ -1,4 +1,5 @@
-// Package echo é o catch-all: responde a qualquer método em qualquer path (exceto /_echo/*)
+// Package echo é o catch-all: responde a qualquer método em qualquer path (exceto as rotas
+// do painel, sob ECHO_DASHBOARD_PATH)
 // devolvendo o que recebeu, em HTML para navegadores e JSON para o resto.
 package echo
 
@@ -138,7 +139,7 @@ func (h *Handler) page(request *model.Request) web.EchoPage {
 		AppName:         h.options.AppName,
 		HeaderColor:     h.options.HeaderColor,
 		Now:             time.Now().Format(localLayout),
-		DashboardURL:    request.PathBase + "/_echo",
+		DashboardURL:    request.PathBase + h.options.DashboardPath,
 		MachineName:     h.machineName,
 		Request:         request,
 		Headers:         keyValues(request.Headers, true),

@@ -16,6 +16,7 @@ const (
 	DefaultMaxBodyBytes    = 64 * 1024
 	DefaultMaxRequestBytes = 30_000_000
 	DefaultPort            = 80
+	DefaultDashboardPath   = "/_echo"
 )
 
 // Options são as configurações do echo.
@@ -35,6 +36,9 @@ type Options struct {
 	MaxRequestBytes int64
 	// Port é a porta HTTP (ECHO_PORT).
 	Port int
+	// DashboardPath é o prefixo das rotas reservadas do painel, da API e do WebSocket
+	// (ECHO_DASHBOARD_PATH). Normalizado: começa com "/" e não termina com "/" (ex.: "/_echo").
+	DashboardPath string
 }
 
 var (
@@ -65,6 +69,8 @@ func Load(getenv func(string) string) (Options, error) {
 	if err == nil && port > 65535 {
 		collect(fmt.Errorf("the environment variable ECHO_PORT must be between 1 and 65535, but got '%d'", port))
 	}
+	dashboardPath, err := readPath(getenv, "ECHO_DASHBOARD_PATH", DefaultDashboardPath)
+	collect(err)
 
 	if len(errs) > 0 {
 		return Options{}, errors.Join(errs...)
@@ -78,7 +84,42 @@ func Load(getenv func(string) string) (Options, error) {
 		MaxBodyBytes:    maxBodyBytes,
 		MaxRequestBytes: int64(maxRequestBytes),
 		Port:            port,
+		DashboardPath:   dashboardPath,
 	}, nil
+}
+
+// readPath lê um prefixo de path como "/_echo" ou "/ops/echo". Aceita a barra inicial
+// ausente e a final presente ("_echo", "/_echo/"). Só permite caracteres que não precisam
+// de escape em URL, e rejeita "/" sozinho (reservaria todos os paths), segmentos vazios,
+// "." e "..".
+func readPath(getenv func(string) string, key, fallback string) (string, error) {
+	raw := getenv(key)
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return fallback, nil
+	}
+	value = "/" + strings.Trim(value, "/")
+
+	invalid := func(reason string) error {
+		return fmt.Errorf("the environment variable %s must be a URL path like /_echo (%s), but got '%s'", key, reason, raw)
+	}
+	if value == "/" {
+		return "", invalid("it cannot be the root, or every request would be reserved")
+	}
+	for _, segment := range strings.Split(value[1:], "/") {
+		switch segment {
+		case "":
+			return "", invalid("empty segments are not allowed")
+		case ".", "..":
+			return "", invalid("'.' and '..' segments are not allowed")
+		}
+		for _, c := range segment {
+			if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || strings.ContainsRune("-._~", c)) {
+				return "", invalid("only letters, digits, '-', '.', '_', '~' and '/' are allowed")
+			}
+		}
+	}
+	return value, nil
 }
 
 func readString(getenv func(string) string, key, fallback string) string {

@@ -1,7 +1,7 @@
 // Package model define a fotografia de um request recebido: o que o echo devolve,
 // o que fica no histórico em memória e o que o painel exibe.
 //
-// As tags JSON (camelCase) são o contrato da API /_echo/api e do WebSocket.
+// As tags JSON (camelCase) são o contrato da API do painel (<ECHO_DASHBOARD_PATH>/api) e do WebSocket.
 // O echo usa PascalCase e é montado à parte, no pacote echo.
 package model
 

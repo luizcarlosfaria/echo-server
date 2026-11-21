@@ -5,7 +5,7 @@
 // Campos que mudam por natureza (horários, hostname, IPs, ambiente) e mensagens geradas pelos
 // parsers (JSON, multipart) são ignorados.
 //
-//	go run ./scripts/parity -a http://echo-old -b http://echo-new
+//	go run ./scripts/parity -a http://echo-old -b http://echo-new [-dashboard /_echo]
 package main
 
 import (
@@ -95,11 +95,14 @@ var ignored = map[string]bool{
 	"JsonError": true, "jsonError": true, "Error": true, "error": true,
 }
 
+var dashboardPath string
+
 var ignoredHeaders = map[string]bool{"X-Original-For": true}
 
 func main() {
 	a := flag.String("a", "http://echo-old", "reference instance")
 	b := flag.String("b", "http://echo-new", "instance under test")
+	flag.StringVar(&dashboardPath, "dashboard", "/_echo", "ECHO_DASHBOARD_PATH of both instances")
 	flag.Parse()
 
 	failures := 0
@@ -139,8 +142,8 @@ type outcome struct {
 	problems    string
 	bodyLen     int
 	echo        any // JSON do echo (nil para HTML/HEAD)
-	detail      any // /_echo/api/requests/{id}
-	summary     any // item correspondente em /_echo/api/requests
+	detail      any // <dashboard>/api/requests/{id}
+	summary     any // item correspondente em <dashboard>/api/requests
 }
 
 func run(base string, c testCase) (*outcome, error) {
@@ -190,10 +193,10 @@ func run(base string, c testCase) (*outcome, error) {
 	if id == "" {
 		return o, nil
 	}
-	if o.detail, err = getJSON(base + "/_echo/api/requests/" + id); err != nil {
+	if o.detail, err = getJSON(base + dashboardPath + "/api/requests/" + id); err != nil {
 		return nil, err
 	}
-	list, err := getJSON(base + "/_echo/api/requests?limit=1")
+	list, err := getJSON(base + dashboardPath + "/api/requests?limit=1")
 	if err != nil {
 		return nil, err
 	}

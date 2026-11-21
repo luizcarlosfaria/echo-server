@@ -72,6 +72,7 @@ All of them are optional.
 | `ECHO_MAX_BODY_BYTES` | `65536` | Body bytes **stored** per request. The rest is truncated (`Truncated: true`), but `Size` still reports the real size. |
 | `ECHO_MAX_REQUEST_BYTES` | `30000000` | Body bytes **read** per request. Beyond that the echo stops reading, but **still answers 200** and reports `body_too_large` (instead of a 413). |
 | `ECHO_PORT` | `80` | HTTP port the server listens on. |
+| `ECHO_DASHBOARD_PATH` | `/_echo` | Path of the dashboard, its API and its WebSocket. Change it when `/_echo` collides with a route you want to echo (e.g. `/ops/echo`). Letters, digits, `-`, `.`, `_`, `~` and `/` only; the leading `/` is optional and a trailing `/` is ignored. |
 
 **Booleans** accept `true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off`, case-insensitive.
 
@@ -235,7 +236,7 @@ Navigation honors the active filter and keeps the selected item in view. While t
 
 ## History API and WebSocket
 
-Routes under `/_echo` are **reserved**: they are not echoed and do not enter the history.
+Routes under `/_echo` are **reserved**: they are not echoed and do not enter the history. The prefix comes from `ECHO_DASHBOARD_PATH`; with `ECHO_DASHBOARD_PATH=/ops/echo`, every route below moves to `/ops/echo/...` and `/_echo` is echoed like any other path. Matching is case-insensitive and by segment (`/_echox` is not reserved).
 
 | Route | Description |
 |-------|-------------|
@@ -342,7 +343,7 @@ internal/
 ├── model/                 captured request, body, problems and summaries
 ├── store/                 in-memory history (ring buffer) and subscriptions
 ├── echo/                  catch-all echo: JSON (PascalCase) and HTML
-├── dashboard/             /_echo page, /_echo/api/* and /_echo/ws WebSocket
+├── dashboard/             dashboard page, API and WebSocket under ECHO_DASHBOARD_PATH (/_echo)
 ├── web/                   HTML templates (html/template + Tailwind) and dashboard.js, embedded
 └── app/                   wiring, plus the integration tests
 scripts/parity/            compares two running instances request by request

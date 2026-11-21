@@ -56,8 +56,8 @@ func run() error {
 		}
 	}()
 
-	slog.Info(fmt.Sprintf("Echo '%s' keeping up to %d requests (body up to %d bytes). Dashboard at /_echo",
-		options.AppName, options.MaxRequests, options.MaxBodyBytes), "port", options.Port)
+	slog.Info(fmt.Sprintf("Echo '%s' keeping up to %d requests (body up to %d bytes). Dashboard at %s",
+		options.AppName, options.MaxRequests, options.MaxBodyBytes, options.DashboardPath), "port", options.Port)
 
 	select {
 	case err := <-failed:

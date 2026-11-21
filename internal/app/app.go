@@ -1,4 +1,5 @@
-// Package app monta o handler HTTP completo: X-Forwarded-*, rotas reservadas /_echo e o echo.
+// Package app monta o handler HTTP completo: X-Forwarded-*, rotas reservadas do painel
+// (ECHO_DASHBOARD_PATH) e o echo.
 package app
 
 import (
@@ -22,7 +23,7 @@ func New(options config.Options, st *store.Store, stopping context.Context) http
 	dashboardHandler := dashboard.New(options, st, stopping)
 
 	router := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if dashboard.IsReserved(r.URL.Path) {
+		if dashboardHandler.IsReserved(r.URL.Path) {
 			dashboardHandler.ServeHTTP(w, r)
 			return
 		}

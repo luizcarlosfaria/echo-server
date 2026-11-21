@@ -16,7 +16,7 @@ func TestDefaults(t *testing.T) {
 	}
 	want := Options{
 		AppName: "Echo", HeaderColor: "gray-900", ShowEnvironment: true,
-		MaxRequests: 1000, MaxBodyBytes: 65536, MaxRequestBytes: 30_000_000, Port: 80,
+		MaxRequests: 1000, MaxBodyBytes: 65536, MaxRequestBytes: 30_000_000, Port: 80, DashboardPath: "/_echo",
 	}
 	if options != want {
 		t.Fatalf("got %+v, want %+v", options, want)
@@ -26,14 +26,14 @@ func TestDefaults(t *testing.T) {
 func TestValuesAreRead(t *testing.T) {
 	options, err := Load(env(map[string]string{
 		"APP_NAME": "  Echo 1 ", "HEADER_COLOR": "blue-600", "ECHO_SHOW_ENVIRONMENT": "off",
-		"ECHO_MAX_REQUESTS": " 200 ", "ECHO_MAX_BODY_BYTES": "10", "ECHO_MAX_REQUEST_BYTES": "+1000", "ECHO_PORT": "8080",
+		"ECHO_MAX_REQUESTS": " 200 ", "ECHO_MAX_BODY_BYTES": "10", "ECHO_MAX_REQUEST_BYTES": "+1000", "ECHO_PORT": "8080", "ECHO_DASHBOARD_PATH": " ops/echo/ ",
 	}))
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := Options{
 		AppName: "Echo 1", HeaderColor: "blue-600", ShowEnvironment: false,
-		MaxRequests: 200, MaxBodyBytes: 10, MaxRequestBytes: 1000, Port: 8080,
+		MaxRequests: 200, MaxBodyBytes: 10, MaxRequestBytes: 1000, Port: 8080, DashboardPath: "/ops/echo",
 	}
 	if options != want {
 		t.Fatalf("got %+v, want %+v", options, want)
@@ -65,6 +65,7 @@ func TestInvalidValuesFailOnStartup(t *testing.T) {
 		"ECHO_MAX_BODY_BYTES":    {"0", "x"},
 		"ECHO_MAX_REQUEST_BYTES": {"-5"},
 		"ECHO_PORT":              {"0", "70000"},
+		"ECHO_DASHBOARD_PATH":    {"/", "//", "/a//b", "/a/../b", "/./x", "/com espaço", "/a?b", "/a#b", "/ação", "/%41"},
 	}
 	for key, values := range cases {
 		for _, value := range values {
@@ -80,5 +81,24 @@ func TestAllErrorsAreReported(t *testing.T) {
 	_, err := Load(env(map[string]string{"ECHO_MAX_REQUESTS": "x", "ECHO_SHOW_ENVIRONMENT": "?"}))
 	if err == nil || !strings.Contains(err.Error(), "ECHO_MAX_REQUESTS") || !strings.Contains(err.Error(), "ECHO_SHOW_ENVIRONMENT") {
 		t.Fatalf("got %v", err)
+	}
+}
+
+func TestDashboardPathIsNormalized(t *testing.T) {
+	cases := map[string]string{
+		"":              "/_echo",
+		"   ":           "/_echo",
+		"/_echo":        "/_echo",
+		"_echo":         "/_echo",
+		"/_echo/":       "/_echo",
+		"/painel":       "/painel",
+		"/ops/echo-v2":  "/ops/echo-v2",
+		"/.well~known_": "/.well~known_",
+	}
+	for value, want := range cases {
+		options, err := Load(env(map[string]string{"ECHO_DASHBOARD_PATH": value}))
+		if err != nil || options.DashboardPath != want {
+			t.Errorf("%q: got %q, %v; want %q", value, options.DashboardPath, err, want)
+		}
 	}
 }

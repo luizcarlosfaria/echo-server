@@ -1,5 +1,6 @@
-// Package dashboard atende as rotas reservadas sob /_echo, que não são ecoadas nem entram
-// no histórico: o painel, o script dele, a API do histórico e o WebSocket.
+// Package dashboard atende as rotas reservadas sob ECHO_DASHBOARD_PATH (padrão /_echo), que
+// não são ecoadas nem entram no histórico: o painel, o script dele, a API do histórico e o
+// WebSocket.
 package dashboard
 
 import (
@@ -17,32 +18,34 @@ import (
 	"github.com/luizcarlosfaria/echo-server/internal/web"
 )
 
-// Prefix é o prefixo das rotas reservadas.
-const Prefix = "/_echo"
-
-// IsReserved indica se o path está sob /_echo (comparação sem diferenciar maiúsculas,
-// por segmento: /_echo e /_echo/x são reservados, /_echox não).
-func IsReserved(path string) bool {
-	if len(path) < len(Prefix) || !strings.EqualFold(path[:len(Prefix)], Prefix) {
+// IsReserved indica se o path está sob o prefixo (sem diferenciar maiúsculas e por segmento:
+// com o prefixo /_echo, /_echo e /_echo/x são reservados, /_echox não). O prefixo só tem
+// caracteres ASCII (validado em config), então o recorte por bytes é seguro.
+func IsReserved(prefix, path string) bool {
+	if len(path) < len(prefix) || !strings.EqualFold(path[:len(prefix)], prefix) {
 		return false
 	}
-	return len(path) == len(Prefix) || path[len(Prefix)] == '/'
+	return len(path) == len(prefix) || path[len(prefix)] == '/'
 }
 
-// Handler atende /_echo/*.
+// Handler atende <prefixo>/*.
 type Handler struct {
 	options  config.Options
+	prefix   string
 	store    *store.Store
 	stopping context.Context
 }
 
 // New cria o handler. stopping é cancelado no shutdown, encerrando os WebSockets abertos.
 func New(options config.Options, st *store.Store, stopping context.Context) *Handler {
-	return &Handler{options: options, store: st, stopping: stopping}
+	return &Handler{options: options, prefix: options.DashboardPath, store: st, stopping: stopping}
 }
 
+// IsReserved indica se o path pertence ao painel.
+func (h *Handler) IsReserved(path string) bool { return IsReserved(h.prefix, path) }
+
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rest := strings.ToLower(r.URL.Path[len(Prefix):])
+	rest := strings.ToLower(r.URL.Path[len(h.prefix):])
 
 	switch {
 	case rest == "" || rest == "/":
@@ -96,7 +99,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) servePage(w http.ResponseWriter, r *http.Request) {
 	info := forwarded.FromRequest(r)
-	base := info.PathBase + Prefix + "/"
+	base := info.PathBase + h.prefix + "/"
 	err := web.RenderDashboard(w, web.DashboardPage{
 		Title:       h.options.AppName + " · Live requests",
 		AppName:     h.options.AppName,
