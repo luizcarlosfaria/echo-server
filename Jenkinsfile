@@ -44,8 +44,8 @@ pipeline {
                 {
                     sh  '''
 
-                        docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD registry.oragon.io 
-                        
+                        echo $REGISTRY_PASSWORD | docker login -u $REGISTRY_USER --password-stdin registry.oragon.io 
+
                         docker push registry.oragon.io/tools/echo:${BRANCH_NAME:-master} 
 
                         docker push registry.oragon.io/tools/echo:latest
