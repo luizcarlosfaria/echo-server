@@ -37,13 +37,21 @@ pipeline {
                 sh  '''
 
                     docker tag registry.oragon.io/tools/echo:${BRANCH_NAME:-master} registry.oragon.io/tools/echo:latest
-
-                    docker push registry.oragon.io/tools/echo:${BRANCH_NAME:-master} 
-                    
-                    docker push registry.oragon.io/tools/echo:latest
                
                 '''
 
+                withCredentials([usernamePassword(credentialsId: 'registry.oragon.io', passwordVariable: 'REGISTRY_PASSWORD', usernameVariable: 'REGISTRY_USER' )])
+                {
+                    sh  '''
+
+                        docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD registry.oragon.io 
+                        
+                        docker push registry.oragon.io/tools/echo:${BRANCH_NAME:-master} 
+
+                        docker push registry.oragon.io/tools/echo:latest
+
+                    '''
+                }
             }
 
         }
