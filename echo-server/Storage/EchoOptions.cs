@@ -29,8 +29,15 @@ public sealed class EchoOptions
     /// <summary>Cor Tailwind do cabeçalho (env <c>HEADER_COLOR</c>).</summary>
     public string HeaderColor { get; init; } = "gray-900";
 
+    /// <summary>
+    /// Inclui as variáveis de ambiente do processo no echo (JSON e HTML) (env <c>ECHO_SHOW_ENVIRONMENT</c>).
+    /// Default <c>true</c> por compatibilidade; desligue em ambientes onde elas podem conter segredos.
+    /// </summary>
+    public bool ShowEnvironment { get; init; } = true;
+
     public static EchoOptions FromConfiguration(IConfiguration configuration) => new()
     {
+        ShowEnvironment = ReadBool(configuration, "ECHO_SHOW_ENVIRONMENT", fallback: true),
         MaxRequests = ReadPositiveInt(configuration, "ECHO_MAX_REQUESTS", DefaultMaxRequests),
         MaxBodyBytes = ReadPositiveInt(configuration, "ECHO_MAX_BODY_BYTES", DefaultMaxBodyBytes),
         MaxRequestBytes = ReadPositiveInt(configuration, "ECHO_MAX_REQUEST_BYTES", DefaultMaxRequestBytes),
@@ -42,6 +49,24 @@ public sealed class EchoOptions
     {
         var value = configuration[key];
         return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+    }
+
+    private static readonly string[] TrueValues = ["true", "1", "yes", "y", "on", "sim", "s"];
+    private static readonly string[] FalseValues = ["false", "0", "no", "n", "off", "nao", "não"];
+
+    private static bool ReadBool(IConfiguration configuration, string key, bool fallback)
+    {
+        var raw = configuration[key];
+        if (string.IsNullOrWhiteSpace(raw))
+            return fallback;
+
+        var value = raw.Trim();
+        if (TrueValues.Contains(value, StringComparer.OrdinalIgnoreCase))
+            return true;
+        if (FalseValues.Contains(value, StringComparer.OrdinalIgnoreCase))
+            return false;
+
+        throw new InvalidOperationException($"A variável de ambiente {key} deve ser true ou false, mas recebeu '{raw}'.");
     }
 
     // Valor inválido derruba a subida com mensagem clara (fail fast) em vez de assumir o default silenciosamente.

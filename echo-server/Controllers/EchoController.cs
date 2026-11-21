@@ -42,7 +42,7 @@ public sealed class EchoController(RequestCaptureService capture, RequestStore s
         }
 
         if (EchoResponse.WantsHtml(this.Request))
-            return this.View("Index", new EchoViewModel(captured, options, EnvironmentSnapshot.Get()));
+            return this.View("Index", new EchoViewModel(captured, options, options.ShowEnvironment ? EnvironmentSnapshot.Get() : null));
 
         var json = EchoResponse.Build(captured, options).ToJsonString(EchoJson.Echo);
         return this.Content(json, "application/json; charset=utf-8");

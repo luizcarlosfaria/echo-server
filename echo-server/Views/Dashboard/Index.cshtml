@@ -33,7 +33,11 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <section class="lg:col-span-2 shadow bg-white sm:rounded-lg overflow-hidden">
-            <ul id="list" class="divide-y divide-gray-100 max-h-[75vh] overflow-y-auto"></ul>
+            <p class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-xs text-gray-500">
+                Navegue com <kbd class="font-mono">↑</kbd> <kbd class="font-mono">↓</kbd> <kbd class="font-mono">PgUp</kbd>
+                <kbd class="font-mono">PgDn</kbd> <kbd class="font-mono">Home</kbd> <kbd class="font-mono">End</kbd>
+            </p>
+            <ul id="list" role="listbox" aria-label="Requests recebidos" class="divide-y divide-gray-100 max-h-[75vh] overflow-y-auto"></ul>
             <p id="empty" class="px-6 py-10 text-center text-sm text-gray-500">
                 Nenhum request ainda. Envie algo para qualquer path deste servidor, ex.:<br />
                 <code class="text-gray-700">curl -X POST @Context.Request.Scheme://@Context.Request.Host/teste -d '{"ola":"mundo"}' -H 'Content-Type: application/json'</code>
