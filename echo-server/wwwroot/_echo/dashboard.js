@@ -59,15 +59,15 @@
 
     function formatTime(iso) {
         const d = new Date(iso);
-        return d.toLocaleTimeString('pt-BR', { hour12: false }) + '.' + String(d.getMilliseconds()).padStart(3, '0');
+        return d.toLocaleTimeString('en-US', { hour12: false }) + '.' + String(d.getMilliseconds()).padStart(3, '0');
     }
 
     // ---------- status de conexão ----------
     function setStatus(state) {
         const map = {
-            connecting: ['bg-yellow-400', 'conectando…'],
-            online: ['bg-green-400', paused ? 'pausado' : 'ao vivo'],
-            offline: ['bg-red-500', 'desconectado — tentando reconectar'],
+            connecting: ['bg-yellow-400', 'connecting…'],
+            online: ['bg-green-400', paused ? 'paused' : 'live'],
+            offline: ['bg-red-500', 'disconnected — retrying'],
         };
         const [color, text] = map[state];
         el.dot.className = `inline-block h-3 w-3 rounded-full ${color}`;
@@ -96,7 +96,7 @@
         main.append(h('div', 'text-sm font-medium text-gray-900 truncate', item.path + (item.queryString || '')));
 
         const meta = [`#${item.id}`, formatTime(item.timestamp)];
-        if (item.bodyKind !== 'none') meta.push(`${item.bodyKind} · ${formatBytes(item.bodySize)}${item.bodyTruncated ? ' (truncado)' : ''}`);
+        if (item.bodyKind !== 'none') meta.push(`${item.bodyKind} · ${formatBytes(item.bodySize)}${item.bodyTruncated ? ' (truncated)' : ''}`);
         if (item.remoteIp) meta.push(item.remoteIp);
         main.append(h('div', 'text-xs text-gray-500 truncate', meta.join(' · ')));
 
@@ -138,7 +138,7 @@
 
     function kvTable(obj) {
         const entries = Object.entries(obj ?? {});
-        if (entries.length === 0) return h('p', 'px-6 py-3 text-sm text-gray-500', 'Nenhum dado para ser exibido');
+        if (entries.length === 0) return h('p', 'px-6 py-3 text-sm text-gray-500', 'No data to display');
         const table = h('table', 'min-w-full divide-y divide-gray-100');
         const tbody = h('tbody');
         for (const [key, value] of entries) {
@@ -177,12 +177,12 @@
             h('span', 'text-sm font-medium text-gray-900 break-all', `${req.scheme}://${req.host}${req.pathBase}${req.path}${req.queryString}`));
 
         const overview = kvTable({
-            Id: req.id, Timestamp: new Date(req.timestamp).toLocaleString('pt-BR'), Protocol: req.protocol,
+            Id: req.id, Timestamp: new Date(req.timestamp).toLocaleString('en-US', { hour12: false }), Protocol: req.protocol,
             RemoteIp: req.remoteIp ?? '', ContentType: req.contentType ?? '', ContentLength: req.contentLength ?? '',
         });
 
         const bodyBox = h('div');
-        const summary = `${body.kind} · ${formatBytes(body.size ?? 0)}${body.truncated ? ' · truncado' : ''}${body.charset ? ' · ' + body.charset : ''}`;
+        const summary = `${body.kind} · ${formatBytes(body.size ?? 0)}${body.truncated ? ' · truncated' : ''}${body.charset ? ' · ' + body.charset : ''}`;
         bodyBox.append(h('p', 'px-6 pt-3 text-xs text-gray-500', summary));
         if (body.form) bodyBox.append(kvTable(body.form));
         if (body.files?.length) {
@@ -191,10 +191,10 @@
         if (body.json !== undefined) bodyBox.append(pre(JSON.stringify(body.json, null, 2), 'bg-gray-50'));
         else if (body.text !== undefined && body.text !== null) bodyBox.append(pre(body.text, 'bg-gray-50'));
         if (body.base64) bodyBox.append(pre(body.base64, 'bg-gray-50 text-xs text-gray-600'));
-        if (body.kind === 'none') bodyBox.append(h('p', 'px-6 py-3 text-sm text-gray-500', 'Sem body.'));
+        if (body.kind === 'none') bodyBox.append(h('p', 'px-6 py-3 text-sm text-gray-500', 'No body.'));
 
         const sections = [header];
-        if (req.problems?.length) sections.push(section(`Problemas (${req.problems.length})`, problemList(req.problems)));
+        if (req.problems?.length) sections.push(section(`Problems (${req.problems.length})`, problemList(req.problems)));
 
         el.detail.replaceChildren(...sections,
             section('Request', overview),
@@ -221,7 +221,7 @@
         highlight();
         if (fromKeyboard) el.list.querySelector(`li[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest' });
 
-        el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'Carregando…'));
+        el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'Loading…'));
         clearTimeout(detailTimer);
         detailTimer = setTimeout(() => loadDetail(id), fromKeyboard ? 150 : 0);
     }
@@ -231,13 +231,13 @@
             const response = await fetch(`${base}api/requests/${id}`, { headers: { Accept: 'application/json' } });
             if (selectedId !== id) return; // o usuário já selecionou outro enquanto carregava
             if (response.status === 404) {
-                el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'Este request já foi expurgado do histórico.'));
+                el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'This request has already been purged from history.'));
                 return;
             }
             renderDetail(await response.json());
         } catch (err) {
             if (selectedId === id)
-                el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-red-600', `Falha ao carregar: ${err}`));
+                el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-red-600', `Failed to load: ${err}`));
         }
     }
 
@@ -323,7 +323,7 @@
 
     el.pause.addEventListener('click', () => {
         paused = !paused;
-        el.pause.textContent = paused ? 'Retomar' : 'Pausar';
+        el.pause.textContent = paused ? 'Resume' : 'Pause';
         if (!paused) {
             pending.forEach(m => addItem(m.item, m.totalReceived));
             pending = [];
@@ -333,10 +333,10 @@
     });
 
     el.clear.addEventListener('click', async () => {
-        if (!confirm('Remover todos os requests do histórico deste servidor?')) return;
+        if (!confirm("Remove all requests from this server's history?")) return;
         await fetch(`${base}api/requests`, { method: 'DELETE' });
         selectedId = null;
-        el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'Selecione um request para ver os detalhes.'));
+        el.detail.replaceChildren(h('p', 'px-6 py-10 text-center text-sm text-gray-500', 'Select a request to see its details.'));
     });
 
     connect();

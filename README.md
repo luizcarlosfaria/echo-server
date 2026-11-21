@@ -1,10 +1,10 @@
 # echo-server
 
-Echo Server: serviço de teste para **proxy reverso, ingress controller e API gateway**.
+Echo Server: a test service for **reverse proxies, ingress controllers and API gateways**.
 
-Responde a **qualquer verbo em qualquer path** devolvendo exatamente o que recebeu: método, path, headers, query string, body, IP de origem e variáveis de ambiente do container. Também guarda os últimos requests em memória e os exibe **em tempo real** num painel web.
+It answers **any method on any path** by returning exactly what it received: method, path, headers, query string, body, client IP and the container's environment variables. It also keeps the latest requests in memory and shows them **live** in a web dashboard.
 
-Antes de subir sua aplicação atrás de um proxy, valide o caminho com o echo.
+Before putting your application behind a proxy, validate the route with the echo.
 
 | Echo 1  | Echo 2 |
 | ------------- | ------------- |
@@ -12,33 +12,33 @@ Antes de subir sua aplicação atrás de um proxy, valide o caminho com o echo.
 | `HEADER_COLOR=blue-600`  | `HEADER_COLOR=red-600`  |
 | `APP_NAME=Echo 1`  |  `APP_NAME=Echo 2` |
 
-## Sumário
+## Contents
 
-- [Recursos](#recursos)
-- [Início rápido](#início-rápido)
-- [Variáveis de ambiente](#variáveis-de-ambiente)
-- [Usando o echo](#usando-o-echo)
-- [Formatos de body suportados](#formatos-de-body-suportados)
-- [Requests com problemas](#requests-com-problemas)
-- [Painel em tempo real](#painel-em-tempo-real)
-- [API do histórico e WebSocket](#api-do-histórico-e-websocket)
-- [Atrás de um proxy reverso](#atrás-de-um-proxy-reverso)
-- [Desenvolvimento](#desenvolvimento)
-- [Limitações conhecidas](#limitações-conhecidas)
-- [Paleta de cores](#paleta-de-cores)
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Environment variables](#environment-variables)
+- [Using the echo](#using-the-echo)
+- [Supported body formats](#supported-body-formats)
+- [Requests with problems](#requests-with-problems)
+- [Live dashboard](#live-dashboard)
+- [History API and WebSocket](#history-api-and-websocket)
+- [Behind a reverse proxy](#behind-a-reverse-proxy)
+- [Development](#development)
+- [Known limitations](#known-limitations)
+- [Color palette](#color-palette)
 
-## Recursos
+## Features
 
-- **Echo completo** de qualquer verbo (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS…) em qualquer path.
-- **HTML para navegadores, JSON para o resto**: a escolha é feita pelo header `Accept`.
-- **Principais formatos de body**: JSON, XML, texto com charset, form-urlencoded, multipart (com arquivos) e binário.
-- **Tolerante a falhas**: requests malformados são aceitos e os problemas são sinalizados, em vez de virar erro 500 ou 413.
-- **Histórico em memória** dos últimos N requests (padrão 1000), descartando os mais antigos.
-- **Painel em tempo real** (`/_echo`) via WebSocket, com filtro, pausa e navegação por teclado.
-- **Pronto para proxies**: `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host` e `X-Forwarded-Prefix` são aplicados, e os valores originais ficam visíveis.
-- **.NET 11**, imagem Linux escutando na **porta 80**.
+- **Full echo** of any method (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS…) on any path.
+- **HTML for browsers, JSON for everything else**, chosen by the `Accept` header.
+- **Common body formats**: JSON, XML, text with charset, form-urlencoded, multipart (with files) and binary.
+- **Fault tolerant**: malformed requests are accepted and their problems are reported, instead of turning into a 500 or 413 error.
+- **In-memory history** of the last N requests (default 1000); the oldest ones are discarded.
+- **Live dashboard** (`/_echo`) over WebSocket, with filter, pause and keyboard navigation.
+- **Proxy ready**: `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host` and `X-Forwarded-Prefix` are applied, and the original values stay visible.
+- **.NET 11**, Linux image listening on **port 80**.
 
-## Início rápido
+## Quick start
 
 ```sh
 docker run -d -p 81:80 \
@@ -47,10 +47,10 @@ docker run -d -p 81:80 \
   luizcarlosfaria/echo-server:latest
 ```
 
-- Echo no navegador: http://localhost:81
-- Painel em tempo real: http://localhost:81/_echo
+- Echo in the browser: http://localhost:81
+- Live dashboard: http://localhost:81/_echo
 
-Para ver duas instâncias lado a lado, por exemplo atrás de um balanceador:
+To see two instances side by side, for example behind a load balancer:
 
 ```sh
 docker run -d -p 82:80 \
@@ -59,24 +59,24 @@ docker run -d -p 82:80 \
   luizcarlosfaria/echo-server:latest
 ```
 
-## Variáveis de ambiente
+## Environment variables
 
-Todas são opcionais.
+All of them are optional.
 
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `APP_NAME` | `Echo` | Nome exibido no echo e no painel. Útil para distinguir instâncias. |
-| `HEADER_COLOR` | `gray-900` | Cor [Tailwind](#paleta-de-cores) do cabeçalho (ex.: `blue-600`, `red-600`). |
-| `ECHO_SHOW_ENVIRONMENT` | `true` | Inclui as variáveis de ambiente do container no echo (JSON e HTML). Use `false` quando elas puderem conter segredos. |
-| `ECHO_MAX_REQUESTS` | `1000` | Quantidade de requests mantidos no histórico em memória. Ao atingir o limite, os mais antigos são descartados. |
-| `ECHO_MAX_BODY_BYTES` | `65536` | Bytes de body **armazenados** por request. O excedente é truncado (`Truncated: true`), mas `Size` informa o tamanho real. |
-| `ECHO_MAX_REQUEST_BYTES` | `30000000` | Bytes **lidos** de cada body. Acima disso o echo para de ler, mas **responde 200** e sinaliza `body_too_large` (em vez do 413 do Kestrel). |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_NAME` | `Echo` | Name shown in the echo and the dashboard. Useful to tell instances apart. |
+| `HEADER_COLOR` | `gray-900` | [Tailwind](#color-palette) color of the header (e.g. `blue-600`, `red-600`). |
+| `ECHO_SHOW_ENVIRONMENT` | `true` | Includes the container's environment variables in the echo (JSON and HTML). Use `false` when they may contain secrets. |
+| `ECHO_MAX_REQUESTS` | `1000` | Number of requests kept in the in-memory history. When the limit is reached, the oldest ones are discarded. |
+| `ECHO_MAX_BODY_BYTES` | `65536` | Body bytes **stored** per request. The rest is truncated (`Truncated: true`), but `Size` still reports the real size. |
+| `ECHO_MAX_REQUEST_BYTES` | `30000000` | Body bytes **read** per request. Beyond that the echo stops reading, but **still answers 200** and reports `body_too_large` (instead of Kestrel's 413). |
 
-**Booleanos** aceitam `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off` e `sim`/`não`, sem diferenciar maiúsculas.
+**Booleans** accept `true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off`, case-insensitive.
 
-**Valores inválidos** (número zero ou negativo, texto onde se espera número, booleano desconhecido) **impedem a subida do container** com uma mensagem que diz qual variável está errada. O echo não assume o padrão sem avisar.
+**Invalid values** (zero or negative numbers, text where a number is expected, an unknown boolean) **prevent the container from starting**, with a message naming the wrong variable. The echo never silently falls back to the default.
 
-Exemplo de container "silencioso", sem expor o ambiente e com histórico menor:
+Example of a "quiet" container that hides the environment and keeps a smaller history:
 
 ```sh
 docker run -d -p 81:80 \
@@ -85,25 +85,25 @@ docker run -d -p 81:80 \
   luizcarlosfaria/echo-server:latest
 ```
 
-## Usando o echo
+## Using the echo
 
-### HTML ou JSON
+### HTML or JSON
 
-| Cliente | `Accept` | Resposta |
-|---------|----------|----------|
-| Navegador | `text/html,…` | Página HTML |
+| Client | `Accept` | Response |
+|--------|----------|----------|
+| Browser | `text/html,…` | HTML page |
 | curl | `*/*` | JSON |
-| HttpClient, fetch, SDKs… | ausente, `application/json` etc. | JSON |
+| HttpClient, fetch, SDKs… | missing, `application/json`, etc. | JSON |
 
-Quem pede `text/html` (ou `application/xhtml+xml`) recebe HTML. Todos os outros recebem JSON.
+Clients asking for `text/html` (or `application/xhtml+xml`) get HTML. Everyone else gets JSON.
 
-### Exemplo
+### Example
 
 ```sh
-curl -X POST 'http://localhost:81/pedidos?origem=readme' \
+curl -X POST 'http://localhost:81/orders?source=readme' \
   -H 'Content-Type: application/json' \
   -H 'X-Correlation-Id: abc-123' \
-  -d '{"cliente":"Ana","itens":[1,2]}'
+  -d '{"customer":"Ana","items":[1,2]}'
 ```
 
 ```jsonc
@@ -117,10 +117,10 @@ curl -X POST 'http://localhost:81/pedidos?origem=readme' \
     "Host": [ "localhost:81" ],
     "User-Agent": [ "curl/8.22.0" ],
     "Content-Type": [ "application/json" ],
-    "Content-Length": [ "31" ],
+    "Content-Length": [ "32" ],
     "X-Correlation-Id": [ "abc-123" ]
   },
-  "Path": "/pedidos",
+  "Path": "/orders",
   "PathBase": "",
   "MachineName": "a1b2c3d4e5f6",
   "Method": "POST",
@@ -129,153 +129,153 @@ curl -X POST 'http://localhost:81/pedidos?origem=readme' \
   "Protocol": "HTTP/1.1",
   "RemoteIp": "172.17.0.1",
   "Problems": [],
-  "QueryString": [ { "Key": "origem", "Value": [ "readme" ] } ],
+  "QueryString": [ { "Key": "source", "Value": [ "readme" ] } ],
   "Forms": [],
-  "Payload": { "cliente": "Ana", "itens": [ 1, 2 ] },
+  "Payload": { "customer": "Ana", "items": [ 1, 2 ] },
   "Body": {
     "Kind": "json",
-    "Size": 31,
+    "Size": 32,
     "Truncated": false,
     "Charset": "utf-8",
-    "Text": "{\"cliente\":\"Ana\",\"itens\":[1,2]}"
+    "Text": "{\"customer\":\"Ana\",\"items\":[1,2]}"
   },
   "EnvironmentVariables": { "APP_NAME": "Echo 1", "...": "..." }
 }
 ```
 
-### Campos da resposta
+### Response fields
 
-| Campo | Descrição |
-|-------|-----------|
-| `RequestId` | Id do request no histórico (também no header `X-Echo-Request-Id`). |
-| `AppName`, `MachineName` | Identificam a instância. Úteis para validar o balanceamento. |
-| `Now`, `UtcNow` | Horário do servidor (local, conforme `TZ`, e UTC). |
-| `Method`, `Scheme`, `Host`, `Path`, `PathBase`, `Protocol` | Como o request chegou, **já com os `X-Forwarded-*` aplicados**. |
-| `RemoteIp` | IP do cliente (via `X-Forwarded-For`, quando presente). |
-| `Headers` | Todos os headers. Os originais substituídos por `X-Forwarded-*` aparecem como `X-Original-*`. |
-| `QueryString` | Parâmetros da query, inclusive chaves repetidas. |
-| `Forms` | Campos de formulário, no formato legado `[{ Key, Value }]`. |
-| `Payload` | O JSON do body já interpretado (objeto, array ou primitivo), presente só quando o body é JSON válido. |
-| `Body` | Detalhes do body; veja [formatos](#formatos-de-body-suportados). |
-| `Problems` | Problemas detectados no request; veja [requests com problemas](#requests-com-problemas). |
-| `EnvironmentVariables` | Variáveis de ambiente do container. Omitido quando `ECHO_SHOW_ENVIRONMENT=false`. |
+| Field | Description |
+|-------|-------------|
+| `RequestId` | Id of the request in the history (also in the `X-Echo-Request-Id` header). |
+| `AppName`, `MachineName` | Identify the instance. Useful to check load balancing. |
+| `Now`, `UtcNow` | Server time (local, according to `TZ`, and UTC). |
+| `Method`, `Scheme`, `Host`, `Path`, `PathBase`, `Protocol` | How the request arrived, **with `X-Forwarded-*` already applied**. |
+| `RemoteIp` | Client IP (from `X-Forwarded-For`, when present). |
+| `Headers` | All headers. The originals replaced by `X-Forwarded-*` show up as `X-Original-*`. |
+| `QueryString` | Query parameters, including repeated keys. |
+| `Forms` | Form fields, in the legacy `[{ Key, Value }]` format. |
+| `Payload` | The body's JSON, already parsed (object, array or primitive). Present only when the body is valid JSON. |
+| `Body` | Body details; see [formats](#supported-body-formats). |
+| `Problems` | Problems detected in the request; see [requests with problems](#requests-with-problems). |
+| `EnvironmentVariables` | The container's environment variables. Omitted when `ECHO_SHOW_ENVIRONMENT=false`. |
 
-Requests `HEAD` recebem os mesmos headers, sem body.
+`HEAD` requests get the same headers, without a body.
 
-## Formatos de body suportados
+## Supported body formats
 
-| `Body.Kind` | Content-Types | Conteúdo devolvido |
-|-------------|---------------|--------------------|
-| `json` | `application/json`, `text/json`, `*/*+json` (ex.: `problem+json`, `vnd.api+json`) | `Text`, e `Payload` com o JSON interpretado |
-| `xml` | `application/xml`, `text/xml`, `*/*+xml` (ex.: `soap+xml`) | `Text` |
-| `text` | `text/*`, `application/javascript`, `x-ndjson`, `yaml`, `graphql`, `csv`… | `Text`, decodificado pelo `charset` informado (UTF-8, Latin-1…) |
-| `form` | `application/x-www-form-urlencoded` | `Form` (e o legado `Forms`) |
-| `multipart` | `multipart/form-data` | `Form` mais `Files` (nome, tipo e tamanho de cada arquivo, sem o conteúdo) |
-| `binary` | demais tipos (`application/octet-stream`, imagens, PDF…) | `Base64` |
-| `none` | sem body | n/a |
+| `Body.Kind` | Content-Types | What is returned |
+|-------------|---------------|------------------|
+| `json` | `application/json`, `text/json`, `*/*+json` (e.g. `problem+json`, `vnd.api+json`) | `Text`, plus `Payload` with the parsed JSON |
+| `xml` | `application/xml`, `text/xml`, `*/*+xml` (e.g. `soap+xml`) | `Text` |
+| `text` | `text/*`, `application/javascript`, `x-ndjson`, `yaml`, `graphql`, `csv`… | `Text`, decoded with the declared `charset` (UTF-8, Latin-1…) |
+| `form` | `application/x-www-form-urlencoded` | `Form` (and the legacy `Forms`) |
+| `multipart` | `multipart/form-data` | `Form` plus `Files` (name, type and size of each file, not its content) |
+| `binary` | anything else (`application/octet-stream`, images, PDF…) | `Base64` |
+| `none` | no body | n/a |
 
-Além disso:
+Also:
 
-- **Sem `Content-Type`**, o formato é deduzido pelo conteúdo: JSON válido vira `json`, texto UTF-8 vira `text` e o resto vira `binary`.
-- **Bodies chunked** (sem `Content-Length`) são lidos por inteiro.
-- **Qualquer verbo** pode ter body, inclusive `GET` e `DELETE`.
-- `Body.Size` é sempre o tamanho real recebido, mesmo quando o conteúdo armazenado foi truncado.
+- **Without a `Content-Type`**, the format is inferred from the content: valid JSON becomes `json`, UTF-8 text becomes `text`, and the rest becomes `binary`.
+- **Chunked bodies** (no `Content-Length`) are read in full.
+- **Any method** may carry a body, including `GET` and `DELETE`.
+- `Body.Size` is always the real size received, even when the stored content was truncated.
 
-## Requests com problemas
+## Requests with problems
 
-O echo **não rejeita** requests malformados. Ele responde `200` com tudo o que conseguiu ler e sinaliza o que encontrou de errado:
+The echo **does not reject** malformed requests. It answers `200` with everything it managed to read and reports what was wrong:
 
-- no JSON: `Problems: [{ "Code", "Severity", "Message" }]`;
-- no header `X-Echo-Problems: json_invalid, charset_mismatch` (dá para ver com `curl -I`, sem ler o body);
-- na página HTML, em um bloco destacado no topo;
-- no painel `/_echo`, com badge e borda colorida na lista, filtro "Só com problemas" e detalhe de cada problema.
+- in the JSON: `Problems: [{ "Code", "Severity", "Message" }]`;
+- in the `X-Echo-Problems: json_invalid, charset_mismatch` header (visible with `curl -I`, without reading the body);
+- on the HTML page, in a highlighted block at the top;
+- in the `/_echo` dashboard, with a badge and a colored border in the list, a "Problems only" filter and the details of each problem.
 
-| Code | Severity | Quando acontece |
+| Code | Severity | When it happens |
 |------|----------|-----------------|
-| `json_invalid` | error | O Content-Type diz JSON, mas o body não é um JSON válido. |
-| `form_invalid` | error | Form ou multipart malformado (boundary ausente ou errado, limites de form excedidos). O body bruto é devolvido em `Text`/`Base64`. |
-| `body_incomplete` | error | O body terminou antes do `Content-Length` declarado, ou o chunked está malformado. O que chegou é preservado. |
-| `client_aborted` | error | O cliente derrubou a conexão no meio do envio. O request fica no histórico mesmo sem resposta possível. |
-| `content_length_mismatch` | error | O `Content-Length` difere da quantidade de bytes recebida. |
-| `body_too_large` | warning | O body passou de `ECHO_MAX_REQUEST_BYTES`, e a leitura foi interrompida. |
-| `content_type_invalid` | warning | `Content-Type` ilegível. O formato do body é deduzido pelo conteúdo. |
-| `charset_unknown` | warning | Charset desconhecido. O body é decodificado como UTF-8. |
-| `charset_mismatch` | warning | Bytes inválidos para o charset declarado (ex.: Latin-1 enviado como UTF-8). |
-| `body_truncated` | info | O body foi armazenado parcialmente (`ECHO_MAX_BODY_BYTES`). |
+| `json_invalid` | error | The Content-Type says JSON, but the body is not valid JSON. |
+| `form_invalid` | error | Malformed form or multipart (missing or wrong boundary, form limits exceeded). The raw body is returned in `Text`/`Base64`. |
+| `body_incomplete` | error | The body ended before the declared `Content-Length`, or the chunked encoding is malformed. What arrived is kept. |
+| `client_aborted` | error | The client dropped the connection mid-upload. The request stays in the history even though no response is possible. |
+| `content_length_mismatch` | error | The `Content-Length` differs from the number of bytes received. |
+| `body_too_large` | warning | The body went past `ECHO_MAX_REQUEST_BYTES`, and reading stopped. |
+| `content_type_invalid` | warning | Unreadable `Content-Type`. The body format is inferred from its content. |
+| `charset_unknown` | warning | Unknown charset. The body is decoded as UTF-8. |
+| `charset_mismatch` | warning | Bytes that are invalid for the declared charset (e.g. Latin-1 sent as UTF-8). |
+| `body_truncated` | info | The body was only partially stored (`ECHO_MAX_BODY_BYTES`). |
 
 ```sh
-curl -si -X POST http://localhost:81/teste -H 'Content-Type: application/json' -d '{"cliente": ' | grep X-Echo
+curl -si -X POST http://localhost:81/test -H 'Content-Type: application/json' -d '{"customer": ' | grep X-Echo
 # X-Echo-Request-Id: 7
 # X-Echo-Problems: json_invalid
 ```
 
-## Painel em tempo real
+## Live dashboard
 
-Abra **`/_echo`** (ex.: http://localhost:81/_echo). Cada request recebido aparece instantaneamente, sem recarregar a página.
+Open **`/_echo`** (e.g. http://localhost:81/_echo). Every request shows up instantly, without reloading the page.
 
-- **Lista ao vivo** com método, path, horário, tipo e tamanho do body, IP e problemas.
-- **Detalhe** do request selecionado: problemas, dados do request, headers, query e body (JSON formatado, texto, campos de form, arquivos ou base64).
-- **Filtro** por método, path, IP, content-type, Id ou código de problema.
-- **Só com problemas**: mostra apenas os requests sinalizados.
-- **Pausar/Retomar**: congela a lista. Os requests que chegam enquanto está pausado aparecem ao retomar.
-- **Limpar histórico**: apaga o histórico no servidor e em todos os painéis abertos.
-- **Reconexão automática**, com indicador de status (ao vivo, pausado ou desconectado).
+- **Live list** with method, path, time, body type and size, IP and problems.
+- **Details** of the selected request: problems, request data, headers, query and body (formatted JSON, text, form fields, files or base64).
+- **Filter** by method, path, IP, content-type, Id or problem code.
+- **Problems only**: shows just the requests that have problems.
+- **Pause/Resume**: freezes the list. Requests that arrive while paused show up when you resume.
+- **Clear history**: deletes the history on the server and in every open dashboard.
+- **Automatic reconnection**, with a status indicator (live, paused or disconnected).
 
-### Atalhos de teclado
+### Keyboard shortcuts
 
-| Tecla | Ação |
-|-------|------|
-| <kbd>Home</kbd> | Seleciona o primeiro request (o mais recente). |
-| <kbd>End</kbd> | Seleciona o último request (o mais antigo da lista). |
-| <kbd>PgUp</kbd> / <kbd>PgDn</kbd> | Sobe ou desce uma página da lista. |
-| <kbd>↑</kbd> / <kbd>↓</kbd> | Sobe ou desce um request. |
+| Key | Action |
+|-----|--------|
+| <kbd>Home</kbd> | Selects the first request (the most recent one). |
+| <kbd>End</kbd> | Selects the last request (the oldest one in the list). |
+| <kbd>PgUp</kbd> / <kbd>PgDn</kbd> | Moves one page up or down the list. |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Moves one request up or down. |
 
-A navegação respeita o filtro ativo e mantém o item selecionado visível. Enquanto o cursor estiver no campo de filtro, as teclas continuam editando o texto normalmente.
+Navigation honors the active filter and keeps the selected item in view. While the cursor is in the filter box, these keys keep editing the text as usual.
 
-## API do histórico e WebSocket
+## History API and WebSocket
 
-As rotas sob `/_echo` são **reservadas**: não são ecoadas nem entram no histórico.
+Routes under `/_echo` are **reserved**: they are not echoed and do not enter the history.
 
-| Rota | Descrição |
-|------|-----------|
-| `GET /_echo` | Painel em tempo real. |
-| `GET /_echo/api/requests?limit=N` | Resumos do histórico, do mais recente para o mais antigo, com `capacity`, `count` e `totalReceived`. |
-| `GET /_echo/api/requests/{id}` | Request completo (headers, query, body e problemas). Retorna `404` se ele já foi descartado. |
-| `DELETE /_echo/api/requests` | Limpa o histórico. |
-| `GET /_echo/ws` | WebSocket com os eventos em tempo real. |
+| Route | Description |
+|-------|-------------|
+| `GET /_echo` | Live dashboard. |
+| `GET /_echo/api/requests?limit=N` | History summaries, newest first, with `capacity`, `count` and `totalReceived`. |
+| `GET /_echo/api/requests/{id}` | Full request (headers, query, body and problems). Returns `404` if it has already been discarded. |
+| `DELETE /_echo/api/requests` | Clears the history. |
+| `GET /_echo/ws` | WebSocket with live events. |
 
-### Protocolo do WebSocket
+### WebSocket protocol
 
-Mensagens JSON (camelCase), do servidor para o cliente:
+JSON messages (camelCase), from server to client:
 
 ```jsonc
-// Ao conectar: o estado atual
-{ "type": "snapshot", "capacity": 1000, "totalReceived": 42, "items": [ /* resumos */ ] }
+// On connect: the current state
+{ "type": "snapshot", "capacity": 1000, "totalReceived": 42, "items": [ /* summaries */ ] }
 
-// A cada request recebido
+// For every request received
 { "type": "request", "totalReceived": 43, "item": {
     "id": 43, "timestamp": "2026-11-21T03:38:27Z", "method": "POST", "scheme": "http",
-    "host": "localhost:81", "path": "/pedidos", "queryString": "?origem=readme",
+    "host": "localhost:81", "path": "/orders", "queryString": "?source=readme",
     "remoteIp": "172.17.0.1", "contentType": "application/json",
-    "bodyKind": "json", "bodySize": 31, "bodyTruncated": false,
-    "problems": [] } }   // com problemas: "problems": ["json_invalid"], "problemSeverity": "error"
+    "bodyKind": "json", "bodySize": 32, "bodyTruncated": false,
+    "problems": [] } }   // with problems: "problems": ["json_invalid"], "problemSeverity": "error"
 
-// Quando o histórico é limpo
+// When the history is cleared
 { "type": "cleared", "totalReceived": 43 }
 ```
 
-O WebSocket envia apenas **resumos**. O conteúdo completo é buscado sob demanda em `/_echo/api/requests/{id}`. Cada conexão tem sua própria fila, então um cliente lento perde eventos antigos, mas não atrasa o echo nem os outros clientes.
+The WebSocket only sends **summaries**. The full content is fetched on demand from `/_echo/api/requests/{id}`. Each connection has its own queue, so a slow client loses older events but never delays the echo or the other clients.
 
 ```sh
-# acompanhar pelo terminal (exige websocat)
+# follow it from the terminal (requires websocat)
 websocat ws://localhost:81/_echo/ws
 ```
 
-## Atrás de um proxy reverso
+## Behind a reverse proxy
 
-O echo confia nos headers `X-Forwarded-*` vindos de **qualquer origem**, porque o objetivo é justamente mostrar o que o proxy enviou. Não o exponha diretamente à internet esperando que esses headers sejam confiáveis.
+The echo trusts `X-Forwarded-*` headers from **any source**, since its purpose is to show what the proxy sent. Do not expose it directly to the internet expecting those headers to be trustworthy.
 
-Para o painel funcionar atrás de um proxy, ele precisa repassar o upgrade de WebSocket. Com nginx:
+For the dashboard to work behind a proxy, the proxy must forward the WebSocket upgrade. With nginx:
 
 ```nginx
 map $http_upgrade $connection_upgrade {
@@ -293,68 +293,68 @@ server {
         proxy_set_header   Host $host;
         proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header   X-Forwarded-Proto $scheme;
-        proxy_read_timeout 1h;   # o painel mantém o WebSocket aberto
+        proxy_read_timeout 1h;   # the dashboard keeps the WebSocket open
     }
 }
 ```
 
-O repositório traz um exemplo completo com nginx em [`docker-compose.yml`](docker-compose.yml) e [`proxy/`](proxy/):
+The repository includes a full nginx example in [`docker-compose.yml`](docker-compose.yml) and [`proxy/`](proxy/):
 
 ```sh
 docker compose up --build
-# http://localhost/        echo através do nginx
-# http://localhost/_echo   painel através do nginx
+# http://localhost/        echo through nginx
+# http://localhost/_echo   dashboard through nginx
 ```
 
-### Exemplo: troubleshooting de ingress no Kubernetes
+### Example: troubleshooting a Kubernetes ingress
 
 ```sh
-curl -s http://meu-ingress/echo1?a=1 -H 'Accept: application/json'
+curl -s http://my-ingress/echo1?a=1 -H 'Accept: application/json'
 ```
 
-A resposta mostra o `Host`, `Scheme` e `RemoteIp` que o pod recebeu de fato, os headers que o ingress adicionou ou removeu (`X-Forwarded-*`, `X-Real-Ip`, `X-Original-*`) e, por `MachineName`, qual réplica atendeu.
+The response shows the `Host`, `Scheme` and `RemoteIp` the pod actually received, the headers the ingress added or removed (`X-Forwarded-*`, `X-Real-Ip`, `X-Original-*`) and, through `MachineName`, which replica served the request.
 
-## Desenvolvimento
+## Development
 
-Requer o **SDK do .NET 11** (fixado em [`global.json`](global.json)).
+Requires the **.NET 11 SDK** (pinned in [`global.json`](global.json)).
 
 ```sh
 dotnet run --project echo-server                          # http://localhost:5080/_echo
-dotnet test --project tests/EchoServer.IntegrationTests   # testes de integração
-docker build -f echo-server/Dockerfile -t echo-server .   # imagem
+dotnet test --project tests/EchoServer.IntegrationTests   # integration tests
+docker build -f echo-server/Dockerfile -t echo-server .   # image
 ```
 
-> Se o `docker build` falhar no `dotnet restore` com o código **155**, a imagem `mcr.microsoft.com/dotnet/sdk:11.0` no cache local é antiga (anterior à GA). Atualize com `docker pull mcr.microsoft.com/dotnet/sdk:11.0` e `docker pull mcr.microsoft.com/dotnet/aspnet:11.0`.
+> If `docker build` fails at `dotnet restore` with exit code **155**, the cached `mcr.microsoft.com/dotnet/sdk:11.0` image is old (pre-GA). Refresh it with `docker pull mcr.microsoft.com/dotnet/sdk:11.0` and `docker pull mcr.microsoft.com/dotnet/aspnet:11.0`.
 
-### Estrutura
+### Layout
 
 ```text
 echo-server/
-├── Program.cs                     pipeline, configuração e rotas
-├── Capture/                       leitura do request: formatos, problemas, resposta do echo
-├── Storage/                       EchoOptions (variáveis de ambiente) e RequestStore (histórico)
-├── Realtime/                      WebSocket /_echo/ws
-├── Endpoints/                     API /_echo/api/*
-├── Controllers/                   echo (catch-all) e painel
-├── Views/                         páginas HTML (Razor + Tailwind)
-└── wwwroot/_echo/dashboard.js     front-end do painel
-tests/EchoServer.IntegrationTests/ testes de integração (xunit.v3)
-proxy/                             nginx de exemplo
+├── Program.cs                     pipeline, configuration and routes
+├── Capture/                       request reading: formats, problems, echo response
+├── Storage/                       EchoOptions (environment variables) and RequestStore (history)
+├── Realtime/                      /_echo/ws WebSocket
+├── Endpoints/                     /_echo/api/* API
+├── Controllers/                   echo (catch-all) and dashboard
+├── Views/                         HTML pages (Razor + Tailwind)
+└── wwwroot/_echo/dashboard.js     dashboard front-end
+tests/EchoServer.IntegrationTests/ integration tests (xunit.v3)
+proxy/                             example nginx
 ```
 
-### Testes
+### Tests
 
-Os testes de integração sobem a aplicação real com `WebApplicationFactory` e cobrem verbos, paths, formatos de body, escolha entre HTML e JSON, `X-Forwarded-*`, histórico e descarte, variáveis de ambiente, concorrência, WebSocket e requests com problemas. Os cenários que só existem numa conexão de verdade (`Content-Length` mentiroso, conexão derrubada, body acima do limite) rodam contra **Kestrel real**, enviando bytes crus por socket TCP.
+The integration tests start the real application with `WebApplicationFactory` and cover methods, paths, body formats, HTML vs JSON, `X-Forwarded-*`, history and eviction, environment variables, concurrency, WebSocket and requests with problems. Scenarios that only exist on a real connection (a lying `Content-Length`, a dropped connection, a body over the limit) run against **real Kestrel**, sending raw bytes over a TCP socket.
 
-## Limitações conhecidas
+## Known limitations
 
-- **Histórico só em memória**: reiniciar o container apaga tudo, e cada réplica tem o próprio histórico.
-- **Sem autenticação**: o painel, a API e o echo são abertos. Com `ECHO_SHOW_ENVIRONMENT=true` (o padrão), as variáveis de ambiente do container ficam visíveis para qualquer um.
-- **Falhas rejeitadas pelo servidor HTTP** antes de a aplicação ver o request não podem ser sinalizadas: request line ou headers malformados (400), headers grandes demais (431), ou uma conexão que envia o request e fecha antes de ele começar a ser processado.
-- **Arquivos de multipart**: só os metadados (nome, tipo e tamanho) são guardados, nunca o conteúdo.
+- **History is in memory only**: restarting the container clears it, and each replica has its own history.
+- **No authentication**: the dashboard, the API and the echo are open. With `ECHO_SHOW_ENVIRONMENT=true` (the default), the container's environment variables are visible to anyone.
+- **Failures rejected by the HTTP server** before the application sees the request cannot be reported: malformed request line or headers (400), headers too large (431), or a connection that sends the request and closes before processing starts.
+- **Multipart files**: only metadata (name, type and size) is stored, never the content.
 
-## Paleta de cores
+## Color palette
 
-Valores aceitos em `HEADER_COLOR`:
+Values accepted by `HEADER_COLOR`:
 
-[![Paleta de cores do Tailwind CSS](https://raw.githubusercontent.com/luizcarlosfaria/echo-server/master/docs/assets/Customizing-Colors-Tailwind-CSS.png)](https://tailwindcss.com/docs/customizing-colors)
+[![Tailwind CSS color palette](https://raw.githubusercontent.com/luizcarlosfaria/echo-server/master/docs/assets/Customizing-Colors-Tailwind-CSS.png)](https://tailwindcss.com/docs/customizing-colors)

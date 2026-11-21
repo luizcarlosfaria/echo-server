@@ -51,7 +51,7 @@ app.MapControllerRoute(
     defaults: new { controller = "Echo", action = "Index" });
 
 app.Logger.LogInformation(
-    "Echo '{AppName}' armazenando até {MaxRequests} requests (body até {MaxBodyBytes} bytes). Painel em /_echo",
+    "Echo '{AppName}' keeping up to {MaxRequests} requests (body up to {MaxBodyBytes} bytes). Dashboard at /_echo",
     echoOptions.AppName, echoOptions.MaxRequests, echoOptions.MaxBodyBytes);
 
 app.Run();

@@ -20,7 +20,7 @@ public static class RequestStreamWebSocket
         if (!context.WebSockets.IsWebSocketRequest)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsync("Este endpoint aceita apenas conexões WebSocket.", context.RequestAborted);
+            await context.Response.WriteAsync("This endpoint only accepts WebSocket connections.", context.RequestAborted);
             return;
         }
 
@@ -59,7 +59,7 @@ public static class RequestStreamWebSocket
         catch (OperationCanceledException) { }
         catch (Exception ex) when (ex is WebSocketException or IOException or ObjectDisposedException)
         {
-            logger.LogDebug(ex, "Conexão WebSocket do painel encerrada abruptamente.");
+            logger.LogDebug(ex, "Dashboard WebSocket connection closed abruptly.");
         }
         finally
         {

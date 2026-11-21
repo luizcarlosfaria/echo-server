@@ -34,7 +34,7 @@ public sealed class RequestCaptureService(EchoOptions options)
         if (!string.IsNullOrWhiteSpace(request.ContentType) && !MediaTypeHeaderValue.TryParse(request.ContentType, out mediaType))
         {
             problems.Add(ProblemCodes.Create(ProblemCodes.ContentTypeInvalid,
-                $"Content-Type '{request.ContentType}' não pôde ser interpretado; o formato do body foi deduzido pelo conteúdo."));
+                $"Content-Type '{request.ContentType}' could not be parsed; the body format was inferred from its content."));
         }
 
         var body = await this.CaptureBodyAsync(request, mediaType, problems, cancellationToken);
@@ -104,7 +104,7 @@ public sealed class RequestCaptureService(EchoOptions options)
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or FormatException)
         {
-            var message = $"Formulário inválido: {ex.Message}";
+            var message = $"Invalid form: {ex.Message}";
             problems.Add(ProblemCodes.Create(ProblemCodes.FormInvalid, message));
 
             request.Body.Position = 0;
@@ -134,7 +134,7 @@ public sealed class RequestCaptureService(EchoOptions options)
         if (encoding.CodePage == Encoding.UTF8.CodePage && !IsValidUtf8AllowingCut(data, incomplete))
         {
             problems.Add(ProblemCodes.Create(ProblemCodes.CharsetMismatch,
-                "O body contém bytes inválidos para UTF-8; os caracteres inválidos foram substituídos por '�'. Verifique o charset declarado."));
+                "The body contains invalid UTF-8 bytes; invalid characters were replaced with '�'. Check the declared charset."));
         }
 
         var text = encoding.GetString(data).TrimStart('﻿');
@@ -144,7 +144,7 @@ public sealed class RequestCaptureService(EchoOptions options)
             return capture;
 
         if (incomplete)
-            return capture with { JsonError = $"Body incompleto ou truncado ({data.Length} de {read.Total} bytes armazenados); JSON não foi interpretado." };
+            return capture with { JsonError = $"Body incomplete or truncated ({data.Length} of {read.Total} bytes stored); JSON was not parsed." };
 
         try
         {
@@ -153,7 +153,7 @@ public sealed class RequestCaptureService(EchoOptions options)
         }
         catch (JsonException ex)
         {
-            problems.Add(ProblemCodes.Create(ProblemCodes.JsonInvalid, $"JSON inválido: {ex.Message}"));
+            problems.Add(ProblemCodes.Create(ProblemCodes.JsonInvalid, $"Invalid JSON: {ex.Message}"));
             return capture with { JsonError = ex.Message };
         }
     }
@@ -167,17 +167,17 @@ public sealed class RequestCaptureService(EchoOptions options)
         if (read.LimitReached)
         {
             problems.Add(ProblemCodes.Create(ProblemCodes.BodyTooLarge,
-                $"O body excede ECHO_MAX_REQUEST_BYTES ({options.MaxRequestBytes} bytes); a leitura foi interrompida e o restante foi descartado."));
+                $"The body exceeds ECHO_MAX_REQUEST_BYTES ({options.MaxRequestBytes} bytes); reading stopped and the rest was discarded."));
         }
         else if (read.Failure is null && request.ContentLength is { } declared && declared != read.Total)
         {
             problems.Add(ProblemCodes.Create(ProblemCodes.ContentLengthMismatch,
-                $"Content-Length declara {declared} bytes, mas foram recebidos {read.Total}."));
+                $"Content-Length declares {declared} bytes, but {read.Total} were received."));
         }
     }
 
     private RequestProblem Truncation(long total) => ProblemCodes.Create(ProblemCodes.BodyTruncated,
-        $"Body de {total} bytes armazenado parcialmente (ECHO_MAX_BODY_BYTES = {options.MaxBodyBytes}).");
+        $"Body of {total} bytes partially stored (ECHO_MAX_BODY_BYTES = {options.MaxBodyBytes}).");
 
     private (Dictionary<string, string?[]> Fields, bool Truncated) CaptureFormFields(IFormCollection form)
     {
@@ -288,7 +288,7 @@ public sealed class RequestCaptureService(EchoOptions options)
         catch (ArgumentException)
         {
             problems.Add(ProblemCodes.Create(ProblemCodes.CharsetUnknown,
-                $"Charset '{charset}' desconhecido; o body foi decodificado como UTF-8."));
+                $"Unknown charset '{charset}'; the body was decoded as UTF-8."));
             return Utf8NoBom;
         }
     }
@@ -344,11 +344,11 @@ public sealed class RequestCaptureService(EchoOptions options)
         catch (BadHttpRequestException ex)
         {
             // Kestrel: Content-Length maior que o enviado, chunked malformado, timeout de leitura...
-            failure = ProblemCodes.Create(ProblemCodes.BodyIncomplete, $"Body terminou de forma inesperada após {total} bytes: {ex.Message}");
+            failure = ProblemCodes.Create(ProblemCodes.BodyIncomplete, $"Body ended unexpectedly after {total} bytes: {ex.Message}");
         }
         catch (Exception ex) when (ex is OperationCanceledException or IOException)
         {
-            failure = ProblemCodes.Create(ProblemCodes.ClientAborted, $"O cliente encerrou a conexão após enviar {total} bytes do body.");
+            failure = ProblemCodes.Create(ProblemCodes.ClientAborted, $"The client closed the connection after sending {total} bytes of the body.");
         }
         finally
         {
