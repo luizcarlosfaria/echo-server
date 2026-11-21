@@ -37,6 +37,10 @@ pipeline {
                 sh  '''
 
                     docker tag registry.oragon.io/tools/echo:${BRANCH_NAME:-master} registry.oragon.io/tools/echo:latest
+
+                    docker tag registry.oragon.io/tools/echo:${BRANCH_NAME:-master} luizcarlosfaria/echo-server:latest
+
+                    docker tag registry.oragon.io/tools/echo:${BRANCH_NAME:-master} luizcarlosfaria/echo-server:${BRANCH_NAME:-master}
                
                 '''
 
@@ -49,6 +53,19 @@ pipeline {
                         docker push registry.oragon.io/tools/echo:${BRANCH_NAME:-master} 
 
                         docker push registry.oragon.io/tools/echo:latest
+
+                    '''
+                }
+
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'REGISTRY_PASSWORD', usernameVariable: 'REGISTRY_USER' )])
+                {
+                    sh  '''
+
+                        echo $REGISTRY_PASSWORD | docker login -u $REGISTRY_USER --password-stdin
+
+                        docker push luizcarlosfaria/echo-server:latest
+
+                        docker push luizcarlosfaria/echo-server:${BRANCH_NAME:-master}
 
                     '''
                 }
