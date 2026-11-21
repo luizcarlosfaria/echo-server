@@ -1,6 +1,5 @@
-// Package forwarded aplica X-Forwarded-For/Proto/Host/Prefix de qualquer origem, como o
-// ForwardedHeadersMiddleware do ASP.NET com ForwardedHeaders.All, KnownProxies/KnownNetworks
-// vazios e ForwardLimit = 1: só a entrada mais à direita de cada header é consumida.
+// Package forwarded aplica X-Forwarded-For/Proto/Host/Prefix de qualquer origem (todo proxy é
+// confiável) consumindo só a entrada mais à direita de cada header: o proxy mais próximo.
 // Os valores substituídos ficam visíveis em X-Original-For/Proto/Host/Prefix.
 //
 // O middleware também devolve a r.Header o que o net/http guarda fora dela (Host e
@@ -81,7 +80,7 @@ func original(r *http.Request) Info {
 }
 
 // Apply consome a entrada mais à direita de cada X-Forwarded-*, alterando header.
-// Qualquer entrada inválida cancela tudo (como o ASP.NET, que para no primeiro erro).
+// Qualquer entrada inválida cancela tudo (para no primeiro erro, sem aplicar nada).
 func Apply(header http.Header, current Info, remoteAddr string) Info {
 	forValues := splitValues(header.Values(forHeader))
 	protoValues := splitValues(header.Values(protoHeader))
@@ -138,7 +137,7 @@ func Apply(header http.Header, current Info, remoteAddr string) Info {
 		consume(header, hostHeader, hostValues)
 	}
 	if applyPrefix {
-		// Como o ASP.NET: um PathBase original vazio não gera X-Original-Prefix.
+		// Um PathBase original vazio não gera X-Original-Prefix.
 		if current.PathBase != "" {
 			header.Set(originalPrefix, current.PathBase)
 		}

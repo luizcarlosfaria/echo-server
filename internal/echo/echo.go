@@ -22,7 +22,7 @@ import (
 )
 
 // BodyIdleTimeout é quanto tempo a leitura do body espera por mais dados antes de desistir
-// (equivalente ao MinRequestBodyDataRate do Kestrel: um cliente parado não segura a conexão).
+// (um cliente parado não segura a conexão para sempre).
 const BodyIdleTimeout = 30 * time.Second
 
 // Handler é o catch-all do echo.
@@ -189,7 +189,7 @@ func MarshalEcho(v any) ([]byte, error) {
 	return bytes.TrimRight(buf.Bytes(), "\n"), nil
 }
 
-// Layouts do DateTime.ToString("o") do .NET: 7 casas decimais fixas.
+// Layouts de Now/UtcNow no JSON do echo: ISO 8601 com 7 casas decimais fixas.
 const (
 	localLayout = "2006-01-02T15:04:05.0000000-07:00"
 	utcLayout   = "2006-01-02T15:04:05.0000000Z"

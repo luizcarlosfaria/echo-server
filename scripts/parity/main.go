@@ -1,11 +1,11 @@
-// Command parity envia os mesmos requests para duas instâncias do echo (a referência .NET e a
-// reimplementação em Go) e compara as respostas: status, headers X-Echo-*, o JSON do echo e o
+// Command parity envia os mesmos requests para duas instâncias do echo (por exemplo, a
+// versão publicada e um build novo) e compara as respostas: status, headers X-Echo-*, o JSON do echo e o
 // detalhe/resumo do histórico.
 //
 // Campos que mudam por natureza (horários, hostname, IPs, ambiente) e mensagens geradas pelos
 // parsers (JSON, multipart) são ignorados.
 //
-//	go run ./scripts/parity -a http://echo-dotnet -b http://echo-go
+//	go run ./scripts/parity -a http://echo-old -b http://echo-new
 package main
 
 import (
@@ -98,8 +98,8 @@ var ignored = map[string]bool{
 var ignoredHeaders = map[string]bool{"X-Original-For": true}
 
 func main() {
-	a := flag.String("a", "http://echo-dotnet", "reference instance")
-	b := flag.String("b", "http://echo-go", "instance under test")
+	a := flag.String("a", "http://echo-old", "reference instance")
+	b := flag.String("b", "http://echo-new", "instance under test")
 	flag.Parse()
 
 	failures := 0

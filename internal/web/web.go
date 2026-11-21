@@ -107,7 +107,7 @@ func render(w http.ResponseWriter, t *template.Template, data any) error {
 // DashboardScriptVersion é anexado à URL do script (?v=...) para invalidar o cache a cada versão.
 func DashboardScriptVersion() string { return dashboardJSVersion }
 
-// FaviconPath é servido como arquivo estático (como o wwwroot do .NET): o pedido automático
+// FaviconPath é servido como arquivo estático: o pedido automático
 // do navegador não é ecoado nem entra no histórico.
 const FaviconPath = "/favicon.ico"
 

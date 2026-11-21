@@ -108,7 +108,7 @@ func readBool(getenv func(string) string, key string, fallback bool) (bool, erro
 	return false, fmt.Errorf("the environment variable %s must be true or false, but got '%s'", key, raw)
 }
 
-// readPositiveInt aceita inteiros de 32 bits maiores que zero (mesma faixa do int do .NET).
+// readPositiveInt aceita inteiros de 32 bits maiores que zero (faixa histórica do contrato).
 func readPositiveInt(getenv func(string) string, key string, fallback int) (int, error) {
 	raw := getenv(key)
 	value := strings.TrimSpace(raw)

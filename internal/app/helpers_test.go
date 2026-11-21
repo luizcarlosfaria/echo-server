@@ -16,8 +16,7 @@ import (
 	"github.com/luizcarlosfaria/echo-server/internal/store"
 )
 
-// testApp sobe a aplicação num servidor HTTP real (httptest), como o WebApplicationFactory
-// dos testes .NET. Variáveis extras simulam as variáveis de ambiente do container.
+// testApp sobe a aplicação num servidor HTTP real (httptest). Variáveis extras simulam as variáveis de ambiente do container.
 type testApp struct {
 	server *httptest.Server
 	store  *store.Store

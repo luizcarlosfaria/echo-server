@@ -239,7 +239,7 @@ func (c *capturer) interpret(reader *limitedReader, mt *mediaType) model.Body {
 
 // ------------------------------------------------------------------ forms
 
-// parseURLEncoded é tolerante como o FormReader do ASP.NET: escapes inválidos ficam literais.
+// parseURLEncoded é tolerante: escapes inválidos ficam literais.
 func (c *capturer) parseURLEncoded(data []byte) (map[string][]string, bool) {
 	fields := map[string][]string{}
 	budget := c.limits.MaxBodyBytes

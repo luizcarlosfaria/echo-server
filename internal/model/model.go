@@ -184,7 +184,7 @@ func worstSeverity(problems []Problem) *string {
 	return &worst
 }
 
-// Timestamp serializa como o DateTimeOffset do System.Text.Json:
+// Timestamp serializa em ISO 8601:
 // UTC com offset explícito (+00:00) e até 7 casas decimais, sem zeros à direita.
 type Timestamp time.Time
 

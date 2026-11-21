@@ -82,7 +82,7 @@ func TestBodyOverLimitGets200InsteadOf413(t *testing.T) {
 	}
 }
 
-func TestBodyLargerThanOldKestrelDefaultIsAccepted(t *testing.T) {
+func TestBodyLargerThan30MBIsAcceptedWhenTheLimitAllows(t *testing.T) {
 	a := start(t, map[string]string{"ECHO_MAX_REQUEST_BYTES": "40000000"})
 	req, _ := http.NewRequest(http.MethodPut, a.server.URL+"/31mb", bytes.NewReader(make([]byte, 31_000_000)))
 	req.Header.Set("Accept", "application/json")

@@ -135,8 +135,8 @@ func (c *capturer) resolveCharset(mt *mediaType) (string, func([]byte) string) {
 }
 
 // lookupEncoding procura primeiro nos nomes IANA (iso-8859-1 continua iso-8859-1) e depois
-// nos rótulos WHATWG (utf8, latin1...). O nome devolvido é o preferido para MIME, como o
-// WebName do .NET ("iso-8859-1", e não o canônico "ISO_8859-1:1987").
+// nos rótulos WHATWG (utf8, latin1...). O nome devolvido é o preferido para MIME
+// ("iso-8859-1", e não o canônico "ISO_8859-1:1987").
 func lookupEncoding(charset string) (encoding.Encoding, string) {
 	if enc, err := ianaindex.IANA.Encoding(charset); err == nil && enc != nil {
 		for _, index := range []*ianaindex.Index{ianaindex.MIME, ianaindex.IANA} {
@@ -155,7 +155,7 @@ func lookupEncoding(charset string) (encoding.Encoding, string) {
 	return nil, ""
 }
 
-// decodeUTF8 troca cada byte inválido por U+FFFD, como o UTF8Encoding do .NET.
+// decodeUTF8 troca cada byte inválido por U+FFFD (em vez de trocar a sequência inteira).
 func decodeUTF8(data []byte) string {
 	if utf8.Valid(data) {
 		return string(data)
