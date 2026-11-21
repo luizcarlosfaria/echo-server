@@ -1,10 +1,15 @@
 # echo-server
 
-Echo Server: a test service for **reverse proxies, ingress controllers and API gateways**.
+Echo Server: a test service for **reverse proxies, ingress controllers, API gateways and webhooks**.
 
 It answers **any method on any path** by returning exactly what it received: method, path, headers, query string, body, client IP and the container's environment variables. It also keeps the latest requests in memory and shows them **live** in a web dashboard.
 
-Before putting your application behind a proxy, validate the route with the echo.
+Use it to:
+
+- **Validate a route** before putting your application behind a proxy, ingress or gateway: see the `Host`, scheme, client IP and headers that actually arrive.
+- **Inspect webhooks**: point any provider at it and watch each delivery (headers, signature, payload) as it arrives. It's a **self-hosted alternative to [webhook.site](https://webhook.site)**; see [Testing webhooks](#testing-webhooks).
+
+![Live dashboard](https://raw.githubusercontent.com/luizcarlosfaria/echo-server/master/docs/assets/Echo-Dashboard.jpg)
 
 | Echo 1  | Echo 2 |
 | ------------- | ------------- |
@@ -16,6 +21,7 @@ Before putting your application behind a proxy, validate the route with the echo
 
 - [Features](#features)
 - [Quick start](#quick-start)
+- [Testing webhooks](#testing-webhooks)
 - [Environment variables](#environment-variables)
 - [Using the echo](#using-the-echo)
 - [Supported body formats](#supported-body-formats)
@@ -24,6 +30,7 @@ Before putting your application behind a proxy, validate the route with the echo
 - [History API and WebSocket](#history-api-and-websocket)
 - [Behind a reverse proxy](#behind-a-reverse-proxy)
 - [Development](#development)
+- [Upgrading from 2.x](#upgrading-from-2x)
 - [Known limitations](#known-limitations)
 - [Color palette](#color-palette)
 
@@ -33,8 +40,9 @@ Before putting your application behind a proxy, validate the route with the echo
 - **HTML for browsers, JSON for everything else**, chosen by the `Accept` header.
 - **Common body formats**: JSON, XML, text with charset, form-urlencoded, multipart (with files) and binary.
 - **Fault tolerant**: malformed requests are accepted and their problems are reported, instead of turning into a 500 or 413 error.
+- **Webhook inspector**: every delivery gets a `200` right away and shows up in the dashboard with its headers, signature and payload. Self-hosted, no account, no third party holding your payloads.
 - **In-memory history** of the last N requests (default 1000); the oldest ones are discarded.
-- **Live dashboard** (`/_echo`) over WebSocket, with filter, pause and keyboard navigation.
+- **Live dashboard** (`/_echo`, configurable) over WebSocket: requests appear instantly, with full details, filter, "problems only", pause and keyboard navigation.
 - **Proxy ready**: `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host` and `X-Forwarded-Prefix` are applied, and the original values stay visible.
 - **Written in Go**: a single static binary in a ~22 MB distroless image, listening on **port 80**.
 
@@ -59,6 +67,37 @@ docker run -d -p 82:80 \
   luizcarlosfaria/echo-server:latest
 ```
 
+## Testing webhooks
+
+The echo is a **self-hosted alternative to [webhook.site](https://webhook.site)** and similar request inspectors: point a provider (payments, Git hosting, chat, CRM, your own services…) at it and see every delivery in the [live dashboard](#live-dashboard) as soon as it arrives.
+
+1. Start an instance for the webhooks. Hide the environment, since the deliveries may be visible to others:
+
+   ```sh
+   docker run -d -p 8080:80 \
+     -e APP_NAME="Webhook inbox" \
+     -e ECHO_SHOW_ENVIRONMENT=false \
+     luizcarlosfaria/echo-server:latest
+   ```
+
+2. Make it reachable by the provider. Inside your network (Kubernetes, Docker, staging), use its internal address. From the internet, publish it with a tunnel such as `cloudflared tunnel --url http://localhost:8080` or `ngrok http 8080`, or deploy it behind your ingress.
+
+3. Register the webhook URL. **Any path works**, so give each provider its own path to tell them apart: `https://<host>/webhooks/payments`, `https://<host>/webhooks/git`…
+
+4. Open `https://<host>/_echo` and trigger an event. Each delivery shows up instantly with:
+   - **all the headers**, including signatures and delivery ids (`X-Hub-Signature-256`, `Stripe-Signature`, `X-Request-Id`…);
+   - the **payload**: formatted JSON, XML, text, form fields or base64, plus the raw text, handy to check a signature;
+   - **problems** with the delivery, such as invalid JSON or a wrong charset, highlighted in red;
+   - the client IP and the `X-Forwarded-*` headers added by tunnels and proxies.
+
+   Filter by path to follow a single provider, and use **Pause** to freeze the list while you read.
+
+Every delivery gets an immediate `200` (with the echo JSON as the body), so providers mark it as delivered and don't retry. You can also fetch deliveries from a script through the [history API](#history-api-and-websocket).
+
+**Compared with a hosted inspector**: your payloads never leave your infrastructure, there's no account and no expiring URL, it works in private networks and CI, and you control how many requests are kept (`ECHO_MAX_REQUESTS`). On the other hand, you have to expose it yourself, the history lives only in memory, and the response is always `200` with the echo JSON: you can't script custom responses (status code, body or delays), so handshakes that expect a specific reply, such as a challenge echo, won't complete.
+
+> The dashboard and the history API have **no authentication**. When the echo is reachable from the internet, anyone who knows the URL can read the deliveries. Keep `ECHO_SHOW_ENVIRONMENT=false`, keep the instance short-lived, and consider moving the dashboard to a less obvious path with `ECHO_DASHBOARD_PATH`, which is obscurity rather than protection.
+
 ## Environment variables
 
 All of them are optional.
@@ -73,10 +112,11 @@ All of them are optional.
 | `ECHO_MAX_REQUEST_BYTES` | `30000000` | Body bytes **read** per request. Beyond that the echo stops reading, but **still answers 200** and reports `body_too_large` (instead of a 413). |
 | `ECHO_PORT` | `80` | HTTP port the server listens on. |
 | `ECHO_DASHBOARD_PATH` | `/_echo` | Path of the dashboard, its API and its WebSocket. Change it when `/_echo` collides with a route you want to echo (e.g. `/ops/echo`). Letters, digits, `-`, `.`, `_`, `~` and `/` only; the leading `/` is optional and a trailing `/` is ignored. |
+| `TZ` | `America/Sao_Paulo` | Time zone of the `Now` field and of the HTML page (`UtcNow` is always UTC). Any IANA name, e.g. `UTC` or `Europe/Lisbon`. |
 
-**Booleans** accept `true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off`, case-insensitive.
+**Booleans** accept `true`/`false`, `1`/`0`, `yes`/`no`, `y`/`n`, `on`/`off` and `sim`/`não`, case-insensitive.
 
-**Invalid values** (zero or negative numbers, text where a number is expected, an unknown boolean) **prevent the container from starting**, with a message naming the wrong variable. The echo never silently falls back to the default.
+**Invalid values prevent the container from starting**, with a message naming the wrong variable: zero or negative numbers, text where a number is expected, an unknown boolean, an `ECHO_PORT` outside 1–65535, or an `ECHO_DASHBOARD_PATH` that is `/` or has empty, `.` or `..` segments or other characters. The echo never silently falls back to the default.
 
 Example of a "quiet" container that hides the environment and keeps a smaller history:
 
@@ -116,10 +156,10 @@ curl -X POST 'http://localhost:81/orders?source=readme' \
   "UtcNow": "2026-11-21T03:38:27.6831307Z",
   "Headers": {
     "Accept": [ "*/*" ],
+    "Content-Length": [ "32" ],
+    "Content-Type": [ "application/json" ],
     "Host": [ "localhost:81" ],
     "User-Agent": [ "curl/8.22.0" ],
-    "Content-Type": [ "application/json" ],
-    "Content-Length": [ "32" ],
     "X-Correlation-Id": [ "abc-123" ]
   },
   "Path": "/orders",
@@ -154,8 +194,8 @@ curl -X POST 'http://localhost:81/orders?source=readme' \
 | `Now`, `UtcNow` | Server time (local, according to `TZ`, and UTC). |
 | `Method`, `Scheme`, `Host`, `Path`, `PathBase`, `Protocol` | How the request arrived, **with `X-Forwarded-*` already applied**. |
 | `RemoteIp` | Client IP (from `X-Forwarded-For`, when present). |
-| `Headers` | All headers. The originals replaced by `X-Forwarded-*` show up as `X-Original-*`. |
-| `QueryString` | Query parameters, including repeated keys. |
+| `Headers` | All headers, in alphabetical order. The originals replaced by `X-Forwarded-*` show up as `X-Original-*`. |
+| `QueryString` | Query parameters, including repeated keys, in alphabetical order. |
 | `Forms` | Form fields, in the legacy `[{ Key, Value }]` format. |
 | `Payload` | The body's JSON, already parsed (object, array or primitive). Present only when the body is valid JSON. |
 | `Body` | Body details; see [formats](#supported-body-formats). |
@@ -195,15 +235,17 @@ The echo **does not reject** malformed requests. It answers `200` with everythin
 | Code | Severity | When it happens |
 |------|----------|-----------------|
 | `json_invalid` | error | The Content-Type says JSON, but the body is not valid JSON. |
-| `form_invalid` | error | Malformed form or multipart (missing or wrong boundary, form limits exceeded). The raw body is returned in `Text`/`Base64`. |
-| `body_incomplete` | error | The body ended before the declared `Content-Length`, or the chunked encoding is malformed. What arrived is kept. |
-| `client_aborted` | error | The client dropped the connection mid-upload. The request stays in the history even though no response is possible. |
-| `content_length_mismatch` | error | The `Content-Length` differs from the number of bytes received. |
+| `form_invalid` | error | Malformed form or multipart (missing or wrong boundary, broken part). The raw body is returned in `Text`/`Base64`. |
+| `body_incomplete` | error | The body ended before the declared `Content-Length`, the chunked encoding is malformed, or no data arrived for 30 seconds. What arrived is kept. |
+| `client_aborted` | error | The client dropped the connection mid-upload. |
+| `content_length_mismatch` | error | The `Content-Length` differs from the number of bytes received. In practice the HTTP server enforces `Content-Length`, so a shorter body is reported as `body_incomplete`; this code remains for compatibility. |
 | `body_too_large` | warning | The body went past `ECHO_MAX_REQUEST_BYTES`, and reading stopped. |
 | `content_type_invalid` | warning | Unreadable `Content-Type`. The body format is inferred from its content. |
 | `charset_unknown` | warning | Unknown charset. The body is decoded as UTF-8. |
 | `charset_mismatch` | warning | Bytes that are invalid for the declared charset (e.g. Latin-1 sent as UTF-8). |
 | `body_truncated` | info | The body was only partially stored (`ECHO_MAX_BODY_BYTES`). |
+
+With `body_incomplete` and `client_aborted` the connection is broken, so the echo closes it **without a response**; the request still enters the history with what arrived.
 
 ```sh
 curl -si -X POST http://localhost:81/test -H 'Content-Type: application/json' -d '{"customer": ' | grep X-Echo
@@ -213,15 +255,16 @@ curl -si -X POST http://localhost:81/test -H 'Content-Type: application/json' -d
 
 ## Live dashboard
 
-Open **`/_echo`** (e.g. http://localhost:81/_echo). Every request shows up instantly, without reloading the page.
+Open **`/_echo`** (e.g. http://localhost:81/_echo, or the path set in `ECHO_DASHBOARD_PATH`). Every request shows up instantly, without reloading the page, so you can keep it open on one side while you drive traffic through a proxy or trigger webhooks on the other.
 
-- **Live list** with method, path, time, body type and size, IP and problems.
+- **Live list** with method, path, time, body type and size, IP and problems; requests with problems get a colored border.
 - **Details** of the selected request: problems, request data, headers, query and body (formatted JSON, text, form fields, files or base64).
 - **Filter** by method, path, IP, content-type, Id or problem code.
 - **Problems only**: shows just the requests that have problems.
 - **Pause/Resume**: freezes the list. Requests that arrive while paused show up when you resume.
 - **Clear history**: deletes the history on the server and in every open dashboard.
 - **Automatic reconnection**, with a status indicator (live, paused or disconnected).
+- **Several viewers at once**: every open dashboard receives the same events, and a slow one never delays the echo.
 
 ### Keyboard shortcuts
 
@@ -256,7 +299,7 @@ JSON messages (camelCase), from server to client:
 
 // For every request received
 { "type": "request", "totalReceived": 43, "item": {
-    "id": 43, "timestamp": "2026-11-21T03:38:27Z", "method": "POST", "scheme": "http",
+    "id": 43, "timestamp": "2026-11-21T03:38:27.6831307+00:00", "method": "POST", "scheme": "http",
     "host": "localhost:81", "path": "/orders", "queryString": "?source=readme",
     "remoteIp": "172.17.0.1", "contentType": "application/json",
     "bodyKind": "json", "bodySize": 32, "bodyTruncated": false,
@@ -357,8 +400,18 @@ The integration tests in `internal/app` start the real application with `httptes
 `scripts/parity` sends the same requests to two running instances (for example, an older image and a new build) and reports every difference in status, `X-Echo-*` headers, echo JSON and history API, ignoring the fields that change by nature (time, hostname, IPs, environment):
 
 ```sh
-go run ./scripts/parity -a http://old-echo -b http://new-echo
+go run ./scripts/parity -a http://old-echo -b http://new-echo   # add -dashboard /ops/echo if ECHO_DASHBOARD_PATH was changed
 ```
+
+## Upgrading from 2.x
+
+Version 3 keeps the same routes, JSON, headers, problem codes and dashboard, so clients don't need changes. What changed for whoever runs the image:
+
+- **Port**: the port and logging variables of 2.x are ignored. To change the port, use `ECHO_PORT`.
+- **No shell in the image**: it's a distroless image with a single binary, so `docker exec <container> sh` no longer works. Use the dashboard, the history API or a debug container.
+- **Ordering**: `Headers` and `QueryString` come in alphabetical order.
+- **`X-Original-For`** shows an IPv4 client as `172.22.0.4:port` instead of `[::ffff:172.22.0.4]:port`.
+- **New variables**: `ECHO_PORT` and `ECHO_DASHBOARD_PATH`.
 
 ## Known limitations
 
@@ -366,6 +419,7 @@ go run ./scripts/parity -a http://old-echo -b http://new-echo
 - **No authentication**: the dashboard, the API and the echo are open. With `ECHO_SHOW_ENVIRONMENT=true` (the default), the container's environment variables are visible to anyone.
 - **Failures rejected by the HTTP server** before the application sees the request cannot be reported: malformed request line or headers (400), headers too large (431), or a connection that sends the request and closes before processing starts.
 - **Multipart files**: only metadata (name, type and size) is stored, never the content.
+- **Fixed response**: the echo always answers `200` with the echo JSON (or HTML). Custom status codes, bodies or delays can't be configured.
 
 ## Color palette
 
